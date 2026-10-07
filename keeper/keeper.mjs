@@ -67,7 +67,8 @@ async function main(pub, wallet, account) {
   let cursor = 1n; // lowest id that may still be open
   for (;;) {
     try {
-      const now = Math.floor(Date.now() / 1000);
+      // Due is judged on chain time, the clock the contract checks.
+      const now = Number((await pub.getBlock({ blockTag: "latest" })).timestamp);
       const total = await pub.readContract({ address: CONTRACT, abi, functionName: "forecastCount" });
       const due = [];
       let firstOpen = null;
