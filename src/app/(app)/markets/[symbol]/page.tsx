@@ -75,29 +75,36 @@ export default async function MarketPage({ params }: Props) {
         </Link>
       </nav>
 
-      {/* Identity strip */}
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5">
+      {/* Identity bar */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-[8px] border border-white/[0.08] bg-card px-3 py-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-[clamp(30px,3.4vw,44px)] leading-none text-ink">{stock.symbol}</h1>
-            <span className="chip">{stock.kind === "etf" ? "ETF" : "Stock"}</span>
-            {stats?.Exchange ? <span className="chip">{stats.Exchange}</span> : null}
+            <h1 className="text-[19px] leading-none font-medium tracking-[-0.02em] text-ink">{stock.symbol}</h1>
+            <span className="chip !py-0 before:hidden">{stock.kind === "etf" ? "ETF" : "Stock"}</span>
+            {stats?.Exchange ? <span className="chip !py-0 before:hidden">{stats.Exchange}</span> : null}
           </div>
-          <p className="mt-2 text-[14px] text-ink-2">{q?.company ?? stock.name} · stock token on {CHAIN.name}</p>
+          <p className="mt-2 text-[13px] text-ink-3">{q?.company ?? stock.name} · stock token on {CHAIN.name}</p>
         </div>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-right">
-          <p className="kicker">Listing (Nasdaq)</p>
-          <p className="kicker">Chainlink feed</p>
-          <p className="num text-[24px] text-ink">{money(q?.last)}</p>
-          <p className="num text-[24px] text-ink">{money(row?.price)}</p>
-          <p className={`num text-[13px] ${up(q?.changePct)}`}>{signPct(q?.changePct)}</p>
-          <p className={`num text-[13px] ${up(row?.change24h != null ? row.change24h * 100 : null)}`}>{signPct(row?.change24h != null ? row.change24h * 100 : null)} 24h</p>
+        <div className="flex gap-8 text-right">
+          <div>
+            <p className="label">Chainlink feed</p>
+            <p className="num mt-1.5 text-[15px] text-ink-2">{money(row?.price)}</p>
+            <p className={`num mt-0.5 text-[11.5px] ${up(row?.change24h != null ? row.change24h * 100 : null)}`}>{signPct(row?.change24h != null ? row.change24h * 100 : null)} 24h</p>
+          </div>
+          <div>
+            <p className="label">Listing · Nasdaq</p>
+            <p className="num mt-1 text-[24px] leading-none text-ink">{money(q?.last)}</p>
+            <p className={`num mt-1 text-[11.5px] ${up(q?.changePct)}`}>
+              {q?.change != null ? `${q.change >= 0 ? "+" : "−"}${Math.abs(q.change).toFixed(2)} ` : ""}
+              {signPct(q?.changePct)}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Forecast + statistics on the left, the chart on the right */}
-      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)]">
-        <div className="min-w-0 space-y-5 lg:order-1">
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_264px]">
+        <div className="min-w-0 space-y-3 lg:order-2">
           <Panel title={`Forecasts · ${stock.symbol}`} note="80 % · house baselines" testid="market-forecasts" pad={false}>
             <ul className="divide-y divide-line text-[13px]">
               {ranges.map(({ h, s }) => (
@@ -111,15 +118,15 @@ export default async function MarketPage({ params }: Props) {
               ))}
             </ul>
             <div className="flex flex-wrap gap-2 border-t border-line p-3">
-              <Link href={`/arena?symbol=${stock.symbol}`} className="btn btn-accent btn-sm">
+              <Link href={`/arena?symbol=${stock.symbol}`} className="abtn abtn-face">
                 Forecast {stock.symbol}
               </Link>
-              <Link href={`/ask?q=${encodeURIComponent(`Where is ${stock.symbol} trading now?`)}`} className="btn btn-ghost btn-sm">
+              <Link href={`/ask?q=${encodeURIComponent(`Where is ${stock.symbol} trading now?`)}`} className="abtn">
                 Ask
               </Link>
             </div>
           </Panel>
-          <Panel title="Session facts" note="exchange listing">
+          <Panel title="Statistics" note="reference listing">
             <dl className="text-[13px]">
               {[
                 ["Last close", money(q?.prevClose)],
@@ -130,21 +137,42 @@ export default async function MarketPage({ params }: Props) {
                 ["Sector", stats?.Sector ?? (stock.kind === "etf" ? "Fund" : "–")],
                 ["Last print", q?.asOf ?? "–"],
               ].map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-3 border-b border-line py-1.5 last:border-0">
+                <div key={k} className="flex justify-between gap-3 border-b border-line py-2 last:border-0">
                   <dt className="text-ink-3">{k}</dt>
                   <dd className="num text-right text-ink">{v}</dd>
                 </div>
               ))}
             </dl>
           </Panel>
+          <Panel title={`News · ${stock.symbol}`} note="Nasdaq">
+            {news.length ? (
+              <ul className="divide-y divide-line">
+                {news.map((n) => (
+                  <li key={n.url} className="py-2.5">
+                    <a href={n.url} target="_blank" rel="noreferrer nofollow" className="text-[13px] leading-snug text-ink hover:underline">
+                      {n.title}
+                    </a>
+                    <p className="mt-0.5 text-[12px] text-ink-3">
+                      {n.publisher} · {n.ago}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[13px] text-ink-3">No headlines right now.</p>
+            )}
+            <Link href={`/news?symbol=${stock.symbol}`} className="kicker mt-3 inline-block hover:!text-ink">
+              All headlines →
+            </Link>
+          </Panel>
         </div>
-        <div className="min-w-0 lg:order-2">
+        <div className="min-w-0 lg:order-1">
           <PriceChart symbol={stock.symbol} overlay={day.count ? { low: day.low, high: day.high, label: "1D baseline range" } : null} />
         </div>
       </div>
 
       {/* Three modes */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
         <Panel title="Volatility forecast" note="Eddy · Chainlink">
           <p className="num text-[22px] text-ink">{eddy ? `${(eddy * Math.sqrt(24 * 252) * 100).toFixed(1)} %` : "–"}</p>
           <p className="mt-1 text-[13px] text-ink-3">annualised, exponentially weighted. Five-day flat estimate: {flat ? `${(flat * Math.sqrt(24 * 252) * 100).toFixed(1)} %` : "–"}.</p>
@@ -171,8 +199,8 @@ export default async function MarketPage({ params }: Props) {
       </div>
 
       {/* Fan + workspace */}
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-5">
+      <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-3">
           <Panel title="Forecast fan" note="seven days of rounds · ranges from now">
             {pts.length > 1 && row?.price ? (
               <FanChart
@@ -230,27 +258,6 @@ export default async function MarketPage({ params }: Props) {
             ) : (
               <p className="p-4 text-[13px] text-ink-3">Not enough rounds in the rounds read so far to replay a forecast.</p>
             )}
-          </Panel>
-          <Panel title={`News · ${stock.symbol}`} note="Nasdaq · links open the publisher">
-            {news.length ? (
-              <ul className="divide-y divide-line">
-                {news.map((n) => (
-                  <li key={n.url} className="py-2.5">
-                    <a href={n.url} target="_blank" rel="noreferrer nofollow" className="text-[14px] leading-snug text-ink hover:text-stamp">
-                      {n.title}
-                    </a>
-                    <p className="mt-0.5 text-[12px] text-ink-3">
-                      {n.publisher} · {n.ago}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[13px] text-ink-3">No headlines right now.</p>
-            )}
-            <Link href={`/news?symbol=${stock.symbol}`} className="kicker mt-3 inline-block hover:!text-ink">
-              All headlines →
-            </Link>
           </Panel>
         </div>
         <div className="min-w-0">

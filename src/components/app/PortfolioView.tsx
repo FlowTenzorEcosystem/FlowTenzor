@@ -42,7 +42,7 @@ export function PortfolioView() {
   const busy = isAddress(address) && !shown && !error;
   return (
     <div className="space-y-5" data-testid="portfolio">
-      <section className="rounded-[10px] border border-line bg-card p-4">
+      <section className="panel p-4">
         <p className="kicker">Wallet address · balances only, nothing to sign</p>
         <form
           className="mt-2 flex flex-wrap gap-2"
@@ -93,7 +93,7 @@ export function PortfolioView() {
               </div>
             ))}
           </dl>
-          <section className="rounded-[10px] border border-line bg-card">
+          <section className="panel">
             <div className="scroll-x">
               <table className="tbl min-w-[640px] text-[13px]">
                 <thead>

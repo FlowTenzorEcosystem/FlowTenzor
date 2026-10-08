@@ -1,180 +1,190 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { BRAND, CHAIN } from "@/config/brand";
-import { oracleLive } from "@/config/contracts";
-import { HEADLINE, STOCKS } from "@/config/stocks";
-import { Btn } from "@/components/kit";
-import { BoardFacts, BoardSkeleton, Fact, FeedTable, HeroFan } from "@/components/forecast/live";
+import { STOCKS } from "@/config/stocks";
+import { MarkHero } from "@/components/landing/MarkHero";
+import { Mark } from "@/components/Mark";
+import { ArrowButton, BarcodeBand, ClaimsScrolly, FollowBento, Globe, HeroField, Reveal } from "@/components/landing/Fx";
 import { HOME_DESCRIPTION, HOME_TITLE, pageMeta } from "@/lib/seo";
-
-export const dynamic = "force-dynamic";
 
 export const metadata = pageMeta({ path: "/", title: HOME_TITLE, description: HOME_DESCRIPTION });
 
-const STYLES = ["Momentum", "Mean reversion", "Volatility", "Order flow", "Earnings drift", "Macro", "Sentiment", "Pairs", "Seasonality", "Regime switching"];
-
-const TOOLS = [
-  { name: "Forecast feed", body: "An 80 % range for every stock token at one hour, one day and one week, with the price it was made against.", href: "/forecasts" },
-  { name: "On-chain oracle", body: "Forecasts and scores stored in ForecastOracle, readable by any contract on Robinhood Chain.", href: "/docs/developers/oracle" },
-  { name: "Consensus signal", body: "Raised when at least three forecasters are live on a token and three in four lean one way.", href: "/docs/forecasts/consensus" },
-  { name: "Divergence flag", body: "Raised when forecasters' centres sit further apart than half their own ranges.", href: "/docs/forecasts/consensus" },
-  { name: "Earnings-week mode", body: "The next estimated report date beside every share, and a flag when it falls inside the week.", href: "/docs/forecasts/earnings-and-macro" },
-  { name: "Market-open gap", body: "An 80 % range for the move between now and the next 9:30 New York open.", href: "/docs/forecasts/earnings-and-macro" },
-  { name: "Volatility forecast", body: "A fast, exponentially weighted volatility estimate per token, next to the direction view.", href: "/markets/nvda" },
-  { name: "Agent SDK", body: "One dependency-free file that reads ranges, scores and consensus from the oracle for an agent's decision rule.", href: "/docs/developers/agents" },
+const ASK_EXAMPLES = [
+  "Which model has the best one-day record on NVDA?",
+  "Where do the top models lean on TSLA this week?",
+  "How wide is the 80 % range on AAPL right now?",
+  "Is HOOD trading above or below its forecast range?",
 ];
 
-const BLOG = [
-  { kicker: "Track record", title: "Checking any score yourself", body: "Why each forecast is fixed before its outcome, and how to re-score it from the feed contract alone.", href: "/docs/models/explorer" },
-  { kicker: "Scoring", title: "The interval score, in plain words", body: "Why a confident miss costs more than a cautious one, and why some forecasts are void.", href: "/docs/how-it-works" },
-  { kicker: "Follow", title: "Following with guardrails", body: "Stake, loss per trade, daily cap and auto-unfollow, and the vault that would enforce them.", href: "/docs/follow/limits" },
+const TOOLS = [
+  { name: "Forecast feed", body: "An 80 % range and a confidence for each stock token, at one hour, one day and one week.", href: "/forecasts" },
+  { name: "On-chain oracle", body: "Ranges and scores stored in ForecastOracle, readable by any contract on Robinhood Chain.", href: "/docs/developers/oracle" },
+  { name: "Consensus signal", body: "Raised when three in four live forecasters lean the same way.", href: "/docs/forecasts/consensus" },
+  { name: "Divergence flag", body: "Marks the tokens where the leading models pull hardest in different directions.", href: "/docs/forecasts/consensus" },
+  { name: "Earnings-week mode", body: "The next report date beside each share, and a flag inside that week.", href: "/docs/forecasts/earnings-and-macro" },
+  { name: "Market-open gap", body: "A range for the move between now and the next 9:30 New York open.", href: "/docs/forecasts/earnings-and-macro" },
+  { name: "Volatility forecast", body: "A fast volatility estimate per token, shown beside the direction view.", href: "/markets/nvda" },
+  { name: "Agent SDK", body: "One read-only file that hands ranges, scores and consensus to an agent's rules.", href: "/docs/developers/agents" },
+];
+
+const ASKED = [
+  {
+    k: "Consensus",
+    q: "“Where are the best-ranked models leaning on chip stocks this week, and how many of them have a live call?”",
+    tool: `Ask ${BRAND.name}`,
+    from: "consensus signal · leaderboard",
+    href: "/ask?q=Where%20do%20the%20top%20models%20lean%20on%20NVDA%3F",
+  },
+  {
+    k: "Earnings",
+    q: "“How has my leader scored when a company reports, and is NVDA's report a week to sit out?”",
+    tool: "Earnings-week mode",
+    from: "scored model record",
+    href: "/markets/nvda",
+  },
+  {
+    k: "Risk",
+    q: "“Which of my holdings are the forecasters most split on right now, and how wide are their ranges?”",
+    tool: "Portfolio view",
+    from: "forecast feed · divergence flag",
+    href: "/portfolio",
+  },
+];
+
+const NOTES = [
+  {
+    title: "A record you can recompute",
+    body: `Why every ${BRAND.name} forecast is fixed before its outcome, and how to re-grade any model from the feed contract alone.`,
+    href: "/docs/models/explorer",
+    tone: "dark",
+  },
+  {
+    title: "How a range is graded against Chainlink",
+    body: "The interval score in plain words: why a confident miss costs more than a cautious one, and when a forecast is void.",
+    href: "/docs/how-it-works",
+    tone: "mid",
+  },
+  {
+    title: "Following with guardrails",
+    body: "Stake per trade, loss per trade, a daily cap and auto-unfollow: the limits that sit around follow mode.",
+    href: "/docs/follow/limits",
+    tone: "light",
+  },
+];
+
+const TYPE_STYLES = [
+  "font-display text-[46px] tracking-[-0.04em]",
+  "font-sans text-[40px] font-semibold tracking-[0.18em]",
+  "font-mono text-[38px] tracking-[-0.02em]",
+  "font-sans text-[42px] font-light tracking-[-0.03em]",
+  "font-display text-[44px] italic tracking-[-0.03em]",
+  "font-sans text-[38px] font-bold tracking-[0.04em]",
+  "font-sans text-[42px] tracking-[0.12em]",
+];
+
+function Icon({ d }: { d: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
+const ICONS = [
+  "M5 3h10l4 4v14H5zM9 12h6M9 16h6",
+  "M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM6 11a6 6 0 0 0 12 0M12 17v4",
+  "M4 20V9M10 20V4M16 20v-8M22 20H2",
+  "M4 5h16v14H4zM8 9h8M8 13h8M8 17h4",
+  "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM15 16h4M17 14v4",
+  "M3 12h4l3-8 4 16 3-8h4",
+  "M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6",
+  "M4 20V12M9 20V7M14 20v-9M19 20V4",
+  "M4 5h16v10H8l-4 4zM8 9h8",
+  "M3 17l6-6 4 4 8-8M15 7h6v6",
+  "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z",
+  "M8 4c-2 0-3 1-3 3v2c0 1.5-1 2-2 2 1 0 2 .5 2 2v2c0 2 1 3 3 3M16 4c2 0 3 1 3 3v2c0 1.5 1 2 2 2-1 0-2 .5-2 2v2c0 2-1 3-3 3",
 ];
 
 export default function Home() {
-  const live = oracleLive();
   return (
     <>
-      {/* 1. Hero: statement on the left, live forecast fan on the right */}
-      <section className="border-b border-line">
-        <div className="ctn grid grid-cols-1 gap-12 py-14 md:py-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center">
-          <div className="min-w-0">
-            <p className="kicker">
-              {BRAND.name} · {BRAND.slogan}
-            </p>
-            <h1 className="h-hero mt-5 !text-[clamp(42px,5.4vw,74px)]">{BRAND.name}: stock forecasts from many competing models, graded in public</h1>
-            <p className="lede mt-6 max-w-[600px]">
-              {BRAND.tagline} Models put ranges on every stock token on {CHAIN.name}, the Chainlink price grades each one, and the best-scoring
-              models climb the table.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Btn href="/forecasts">Launch the app</Btn>
-              <Btn href="/docs" tone="ghost">
-                Read the docs
-              </Btn>
-            </div>
-            <p className="mt-6 flex flex-wrap items-center gap-2">
-              <span className="chip chip-live">Prices: Chainlink, live</span>
-              <span className={`chip ${live ? "chip-live" : "chip-practice"}`}>{live ? "Oracle: on chain" : "Oracle: practice until deployed"}</span>
-            </p>
+      {/* 1. Hero */}
+      <section className="relative overflow-hidden pt-[150px] max-md:pt-[120px]">
+        <div className="relative z-10 mx-auto max-w-[1100px] px-4 text-center">
+          <MarkHero size={63} box={112} />
+          <h1 className="h-hero mx-auto mt-4 max-w-[1068px] !text-[clamp(38px,6.67vw,96px)]">
+            Intelligence flows. <br className="max-sm:hidden" />
+            Winners rise.
+          </h1>
+          <p className="mx-auto mt-6 max-w-[540px] text-[16px] leading-[1.4] text-ink-3 max-sm:text-[14px]">
+            Real-time AI forecasts for every stock token on {CHAIN.name}. Many models publish ranges, Chainlink grades each one, the table ranks them
+            live, and you can follow the winners as they rise.
+          </p>
+          <div className="mt-8 flex justify-center gap-2">
+            <Link href="/ask" className="btn btn-accent">
+              Launch app
+            </Link>
+            <Link href="/docs" className="btn btn-ghost">
+              Read the docs <span aria-hidden="true">→</span>
+            </Link>
           </div>
-          <div className="min-w-0">
-            <Suspense fallback={<BoardSkeleton rows={8} />}>
-              <HeroFan />
-            </Suspense>
-          </div>
+        </div>
+        <div className="relative h-[520px] md:-mt-10 max-md:mt-6 max-md:h-[260px]">
+          <HeroField />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent" />
         </div>
       </section>
 
-      {/* 2. What it is: a record you can verify */}
-      <section className="border-b border-line">
-        <div className="ctn grid grid-cols-1 gap-10 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
-          <div className="min-w-0 lg:order-2">
-            <p className="kicker">What {BRAND.name} is</p>
-            <h2 className="h-sec mt-4">The stock forecaster whose record anyone can check</h2>
-            <div className="mt-6 space-y-5 text-[17px] leading-relaxed text-ink-2">
-              <p>
-                Most tools that call themselves AI give you one opinion from one model you will never see, with a hit rate nobody can rebuild.{" "}
-                {BRAND.name} works the other way round: many independent models forecast the same tokens over the same horizons, every forecast is
-                fixed before its outcome exists, and every one is scored by the same public rule against the same public price.
-              </p>
-              <p>A model earns its place one resolved forecast at a time. Misses are scored as plainly as hits, and no forecast can be withdrawn after it goes wrong.</p>
-              <p>
-                The yardstick is deliberately dull. Four house baselines (a random walk, a fast volatility model, a mean-reversion rule and a momentum
-                rule) forecast every token on the same terms. They need no data beyond the Chainlink rounds and they never get tired, so any model that
-                cannot beat them over a long run of scored calls has not shown skill, however good its story sounds. The leaderboard puts them in the
-                same table as everyone else, labelled, so the gap between a real edge and a lucky stretch is visible at a glance.
-              </p>
-            </div>
-          </div>
-          <div className="min-w-0 lg:order-1">
-            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Forecasting methods that can compete">
-              {STYLES.map((s, i) => (
-                <li key={s} className={`rounded-[10px] border border-line px-3 py-4 text-center text-[14px] ${i % 4 === 1 ? "bg-paper-2 text-ink" : "text-ink-2"}`}>
-                  {s}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-[13.5px] text-ink-3">Any method can enter. The score only asks where the price landed.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Claims versus proof */}
-      <section className="night border-b border-line">
-        <div className="ctn py-16 md:py-24">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-16">
-            <div className="grid min-w-0 grid-cols-1 gap-px overflow-hidden rounded-[12px] border border-line bg-line sm:grid-cols-2">
-              {[
-                ["What you usually get", "A headline hit rate over a chosen period, no losing calls on display."],
-                ["What a scored record shows", "Every forecast, its range, its confidence and the Chainlink price it was judged by."],
-                ["Usually", "One model, one opinion, nothing to compare it with."],
-                ["Here", "Many models on the same tokens and horizons, ranked by one rule."],
-                ["Usually", "Confidence that costs nothing when it is wrong."],
-                ["Here", "A confident miss costs more than a cautious one, by design."],
-              ].map(([k, v], i) => (
-                <div key={i} className="min-w-0 bg-paper p-5">
-                  <p className={`kicker ${i % 2 ? "!text-stamp" : ""}`}>{k}</p>
-                  <p className="mt-2 text-[15.5px] leading-relaxed text-ink-2">{v}</p>
-                </div>
-              ))}
-            </div>
-            <div className="min-w-0 lg:pt-6">
-              <h2 className="h-sec">Every model says it has an edge</h2>
-              <p className="mt-4 font-display text-[clamp(24px,2.6vw,34px)] leading-tight text-ink-3">Almost none can show it.</p>
-              <p className="lede mt-6">A claimed accuracy is a number someone chose to tell you. A scored record is a number the market wrote, one horizon at a time.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. Ask + the feed, scored against Chainlink */}
-      <section id="feed" className="border-b border-line">
-        <div className="ctn py-16 md:py-24">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
-            <div className="min-w-0">
-              <h2 className="h-sec">Ask a question, read the answer from the best-scored forecasts</h2>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Btn href="/ask" tone="ink" small>
-                  Ask {BRAND.name}
-                </Btn>
-                <Btn href="/forecasts" tone="ghost" small>
-                  All {STOCKS.length} tokens
-                </Btn>
-              </div>
-            </div>
-            <p className="lede min-w-0">
-              A price range and a confidence for every stock token on {CHAIN.name}, at one hour, one day and one week. The research console answers
-              plain questions from live listings, the Chainlink feeds and the forecast board, instead of a single opinion.
+      {/* 2. What it is */}
+      <section className="px-4 pt-[150px] md:px-14 max-md:pt-[90px]">
+        <div className="mx-auto flex max-w-[1328px] flex-col justify-between gap-10 lg:flex-row">
+          <h2 className="h-sec max-w-[640px]">A stock forecaster whose record is open to inspection</h2>
+          <div className="max-w-[430px] pt-2">
+            <p className="kicker flex items-center gap-2 !text-ink">
+              <span className="size-1.5 rounded-full bg-ink" /> What {BRAND.name} is
+            </p>
+            <p className="mt-5 text-[14.5px] leading-[1.35] text-ink-3">
+              Most stock AI is a single model behind a curtain. {BRAND.name} lets many models compete in the open: each range is fixed before its
+              outcome exists and graded against the on-chain Chainlink price, so the ranking is something you can recompute rather than something you
+              are told.
             </p>
           </div>
-          <div className="mt-10">
-            <Suspense fallback={<BoardSkeleton rows={10} />}>
-              <FeedTable symbols={HEADLINE.slice(0, 8)} horizon={1} />
-            </Suspense>
-          </div>
-          <p className="mt-5 flex items-center gap-2 text-[14px] text-ink-2">
-            <span className="chip chip-live">Chainlink</span> Each range is graded by that token&apos;s Chainlink price on {CHAIN.name}.
+        </div>
+        <div className="mx-auto mt-14 max-w-[1328px]">
+          <BarcodeBand phrases={ASK_EXAMPLES} />
+        </div>
+      </section>
+
+      {/* 3. Claims, the ask console, and the grading rule */}
+      <ClaimsScrolly
+        claim="Every model sounds sure of itself"
+        doubt="Very few can show the receipts"
+        askTitle="Ask in plain words, hear from the best-ranked models"
+        askBody={`An 80 % price range with a confidence for every stock token on ${CHAIN.name}, at one hour, one day and one week. Type a question and ${BRAND.name} answers from live prices and the forecast board, not from one model's mood.`}
+        askPhrases={[`Ask ${BRAND.name}…`, "How did the leaders do on TSLA?", "Show the NVDA ranges"]}
+        grade="Each forecast is graded by the Chainlink price on chain"
+      />
+
+      {/* 4. Build on it */}
+      <section id="developers" className="relative overflow-hidden pb-[150px]">
+        <span className="absolute top-0 left-1/2 h-[120px] border-l border-dashed border-line-2" aria-hidden="true" />
+        <div className="mx-auto max-w-[760px] px-4 pt-[130px] text-center max-md:pt-[90px]">
+          <h2 className="h-sec">Wire ranked forecasts into your agents, dApps and scripts</h2>
+          <p className="mx-auto mt-7 max-w-[440px] text-[16px] leading-[1.5] text-ink-3">
+            Read {BRAND.name} from a contract through the oracle, from code through the agent SDK, or over HTTP through the forecast API, paid per call
+            in USDG.
           </p>
         </div>
-      </section>
-
-      {/* 5. Build with scored forecasts */}
-      <section id="developers" className="border-b border-line bg-paper-2">
-        <div className="ctn py-16 md:py-24">
-          <div className="max-w-[820px]">
-            <h2 className="h-sec">Build agents and apps on forecasts that carry their own score</h2>
-            <p className="lede mt-5">
-              Read {BRAND.name} from a contract through the oracle, from a script through the agent SDK, or over HTTP through the forecast API, paid
-              per call in USDG. The same numbers wherever you read them.
-            </p>
-          </div>
-          <ul className="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-[12px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-            {TOOLS.map((t, i) => (
-              <li key={t.name} className="min-w-0 bg-paper-2">
-                <Link href={t.href} className="flex h-full flex-col p-5 transition-colors hover:bg-paper-3">
-                  <span className="num text-[12px] text-ink-3">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="mt-3 text-[16px] font-semibold text-ink">{t.name}</span>
-                  <span className="mt-2 text-[14px] leading-relaxed text-ink-2">{t.body}</span>
+        <div className="relative mt-10 h-[110px]" aria-hidden="true">
+          <span className="absolute top-0 left-1/2 h-full border-l border-dashed border-line-2" />
+          <span className="absolute bottom-0 inset-x-0 border-t border-dashed border-line-2" />
+        </div>
+        <div className="overflow-hidden pt-2">
+          <ul className="drift flex w-max gap-3">
+            {[...TOOLS, ...TOOLS].map((t, i) => (
+              <li key={`${t.name}-${i}`} aria-hidden={i >= TOOLS.length ? true : undefined} className="w-[300px] shrink-0 rounded-[14px] border border-line bg-card p-2">
+                <Link href={t.href} tabIndex={i >= TOOLS.length ? -1 : undefined} className="block h-[150px] rounded-[9px] bg-paper-2 p-4 transition-colors hover:bg-paper-3">
+                  <span className="h-item block">{t.name}</span>
+                  <span className="mt-2 block text-[13.5px] leading-[1.35] text-ink-3">{t.body}</span>
                 </Link>
               </li>
             ))}
@@ -182,131 +192,167 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. Follow mode */}
-      <section id="follow" className="border-b border-line">
-        <div className="ctn grid grid-cols-1 gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center">
-          <div className="grid min-w-0 grid-cols-2 gap-3" aria-label="Follow mode features">
+      {/* 5. Follow */}
+      <section id="follow" className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-10 px-4 py-[120px] md:px-14 lg:grid-cols-2 max-md:py-[80px]">
+        <div className="min-w-0">
+          <h2 className="h-sec !text-[clamp(36px,5vw,72px)]">Follow the leading models, inside your own limits</h2>
+          <p className="mt-7 max-w-[540px] text-[16px] leading-[1.45] text-ink-3">
+            Follow mode turns a top-ranked model&apos;s forecasts into positions sized by your rules: the most a trade may stake, the most it may lose,
+            a loss cap for the day, and the score below which you stop following. Paper follow tries a model on simulated capital first, judged by real
+            Chainlink outcomes.
+          </p>
+        </div>
+        <div className="flex min-w-0 justify-center lg:justify-end">
+          <FollowBento
+            left={[
+              { title: "Follow a model", body: "Mirror a leader into positions you size", h: "h-[122px]" },
+              {
+                title: "Paper follow",
+                tag: "Simulated",
+                h: "h-[122px]",
+                extra: (
+                  <p className="flex items-center gap-2 text-[13px] opacity-70">
+                    <span className="size-6 rounded-full bg-[#333]" /> Practice capital
+                  </p>
+                ),
+              },
+              { title: "Auto-unfollow", tag: "Built in", body: "Stops when the score drops under your line", h: "h-[122px]" },
+            ]}
+            right={[
+              { title: "Backtest", body: "Replay its scored past", h: "h-[86px]" },
+              {
+                title: "Your limits",
+                h: "h-[122px]",
+                extra: (
+                  <div className="flex justify-between text-[13px]">
+                    <span>
+                      Max stake <span className="block text-[11px] opacity-60">USDG [ ]</span>
+                    </span>
+                    <span className="text-right">
+                      Daily cap <span className="block text-[11px] opacity-60">Loss [ ]</span>
+                    </span>
+                  </div>
+                ),
+              },
+              { title: "Multi-model", body: "Split across up to three leaders", h: "h-[124px]" },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* 6. The layer */}
+      <section id="leaderboard" className="relative px-4 py-[130px] max-md:py-[80px]">
+        <div className="pointer-events-none absolute top-0 left-1/2 h-[760px] w-[min(1100px,100%)] -translate-x-1/2 max-md:h-[520px]">
+          <Globe />
+        </div>
+        <h2 className="h-sec relative mx-auto max-w-[620px] text-center !text-[clamp(36px,5vw,72px)]">One layer between the model field and {CHAIN.name}</h2>
+        <div className="relative mx-auto mt-[290px] max-w-[424px] max-md:mt-[150px]">
+          <div className="grid grid-cols-3 gap-2">
             {[
-              ["Follow a model", "Copy a leading model into positions whose size you choose.", "col-span-2 sm:col-span-1"],
-              ["Backtest", "Replay a leader over its scored record before you commit.", ""],
-              ["Paper follow", "Simulated stake on real Chainlink outcomes.", ""],
-              ["Your limits", "Stake per trade, max loss per trade, daily loss cap.", "col-span-2 sm:col-span-1 border-accent"],
-              ["Auto-unfollow", "Ends the follow when the leader's score falls under your line.", ""],
-              ["Multi-model", "Split the stake across up to three leaders.", ""],
-            ].map(([k, v, extra]) => (
-              <div key={k} className={`min-w-0 rounded-[12px] border border-line bg-card p-4 ${extra}`}>
-                <p className="text-[15px] font-semibold text-ink">{k}</p>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">{v}</p>
+              ["Traders", "M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8"],
+              ["dApps & agents", "M4 4h16v16H4zM9.5 4v16M14.5 4v16"],
+              ["Developers", "M9 7l-5 5 5 5M15 7l5 5-5 5M13.5 5l-3 14"],
+            ].map(([k, d]) => (
+              <div key={k} className="rounded-[8px] border border-line bg-card p-2">
+                <div className="grid h-[55px] place-items-center rounded-[5px] bg-paper-2 text-ink">
+                  <Icon d={d} />
+                </div>
+                <p className="pt-2.5 pb-1 text-center text-[13px] text-ink max-sm:text-[11.5px]">{k}</p>
               </div>
             ))}
           </div>
-          <div className="min-w-0">
-            <h2 className="h-sec">Follow the models that rank, on your own terms</h2>
-            <div className="mt-5 space-y-4 text-[17px] leading-relaxed text-ink-2">
-              <p>
-                Follow mode turns a leader&apos;s forecasts into positions sized by your rules: the most a trade may risk, the most it may lose, a loss cap for
-                the day, and the score below which you stop following.
-              </p>
-              <p>For now it is paper follow, judged by actual outcomes. Mirroring into your own wallet needs a vault with your limits enforced on chain; its design is published, and it is not deployed.</p>
+          <Connector />
+          <div className="relative rounded-[8px] border border-line-2 bg-paper-3 p-2">
+            <p className="flex justify-center py-4 text-ink">
+              <span className="flex items-center gap-2 text-[20px] font-medium tracking-[-0.03em]">
+                <Mark size={24} /> {BRAND.name}
+              </span>
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                ["Forecast feed", "/forecasts"],
+                ["Follow mode", "/follow"],
+                ["Leaderboard", "/leaderboard"],
+              ].map(([k, href]) => (
+                <Link key={k} href={href} className="grid h-14 place-items-center rounded-[5px] bg-white px-1 text-center text-[13px] leading-tight text-[#0a0a0a] max-sm:text-[11.5px]">
+                  {k}
+                </Link>
+              ))}
             </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Btn href="/follow">Try paper follow</Btn>
-              <Btn href="/docs/follow/execution" tone="ghost">
-                The vault design
-              </Btn>
-            </div>
+            <Link href="/docs/developers/oracle" className="mt-2 grid h-14 place-items-center rounded-[5px] bg-white/90 px-2 text-center text-[13px] text-[#0a0a0a]">
+              ForecastOracle on {CHAIN.name}
+            </Link>
+            <Link href="/docs/how-it-works" className="mt-2 grid h-14 place-items-center rounded-[5px] bg-white/80 px-2 text-center text-[13px] text-[#0a0a0a]">
+              Open grading and a public record
+            </Link>
+            <SideNotes
+              className="top-[58px]"
+              items={["Models ranked by score, with the sample size beside it", `Live ranges for every ${BRAND.symbol} holder and app`, "Every forecast and score readable on chain"]}
+            />
           </div>
+          <Connector />
+          <div className="relative rounded-[8px] border border-line bg-card p-2">
+            <div className="grid grid-cols-6 gap-y-3 rounded-[5px] bg-paper-2 p-4 text-ink-2">
+              {ICONS.map((d, i) => (
+                <span key={i} className="flex justify-center">
+                  <Icon d={d} />
+                </span>
+              ))}
+            </div>
+            <p className="pt-2.5 pb-1 text-center text-[13px] text-ink">Model network</p>
+            <SideNotes className="top-[10px]" items={["Models forecast, the next Chainlink round grades them"]} />
+          </div>
+          {/* phones: the side notes as a list below */}
+          <ul className="mt-6 space-y-2 border-l border-dashed border-line-2 pl-3 text-[13px] text-ink-3 lg:hidden">
+            <li>Models ranked by score, with the sample size beside it</li>
+            <li>Live ranges for every {BRAND.symbol} holder and app</li>
+            <li>Every forecast and score readable on chain</li>
+            <li>Models forecast, the next Chainlink round grades them</li>
+          </ul>
         </div>
+        <p className="relative mt-6 flex flex-wrap items-center justify-center gap-x-1 px-4 text-center text-[12px] text-faint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" />
+          </svg>
+          Models · Chainlink · Price feeds · Stock-token pools · Scores · Leaderboard · Oracle · API · SDK
+        </p>
       </section>
 
-      {/* 7. The layer between models and the chain */}
-      <section id="leaderboard" className="night border-b border-line">
-        <div className="ctn py-16 md:py-24">
-          <h2 className="h-sec max-w-[880px]">One layer between the models and {CHAIN.name}</h2>
-          <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)]">
-            <div className="min-w-0 rounded-[12px] border border-line p-5">
-              <p className="kicker">Who reads it</p>
-              <ul className="mt-4 space-y-4">
-                {[
-                  ["Traders", "Read the feed, check the leaderboard, follow inside their limits."],
-                  ["dApps and agents", "Read ranges, scores and consensus from the oracle."],
-                  ["Developers", "Pull JSON from the API or build a model of their own."],
-                  ["Model builders", "Register, commit, and let the score speak."],
-                ].map(([k, v]) => (
-                  <li key={k}>
-                    <p className="font-semibold text-ink">{k}</p>
-                    <p className="text-[14px] text-ink-2">{v}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="grid min-w-0 grid-cols-1 gap-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {[
-                  ["Forecast feed", "Ranges and signals for every token"],
-                  ["Leaderboard", "Ranked by score, sample size beside it"],
-                  ["Follow mode", "Paper today, a vault later"],
-                ].map(([k, v]) => (
-                  <div key={k} className="rounded-[12px] border border-line bg-card p-4">
-                    <p className="font-semibold text-ink">{k}</p>
-                    <p className="mt-1 text-[13.5px] text-ink-2">{v}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-[12px] border border-accent/60 p-5">
-                <p className="kicker !text-stamp">ForecastOracle on {CHAIN.name}</p>
-                <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
-                  Every forecast, with the Chainlink price it was made against and the round that resolved it. Open scoring: anyone settles, the contract
-                  checks. No owner, no admin key, no fee.
-                </p>
-              </div>
-              <div className="rounded-[12px] border border-dashed border-line-2 p-5">
-                <p className="kicker">Model network</p>
-                <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
-                  Open to any wallet today. A Bittensor subnet, with miners forecasting and TAO emissions as their reward, is an integration target; Bittensor
-                  is its own chain and TAO is not on {CHAIN.name}.
-                </p>
-              </div>
-            </div>
-          </div>
-          <p className="num mt-8 text-[13px] text-ink-3">models · Chainlink feeds · stock-token pools · scores · leaderboard · oracle · API · SDK</p>
-        </div>
-      </section>
-
-      {/* 8. Built to be checked */}
-      <section className="border-b border-line">
-        <div className="ctn py-16 md:py-24">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
-            <h2 className="h-sec min-w-0">Numbers you can reproduce yourself</h2>
-            <p className="lede min-w-0">The first three numbers are counted from the chain as this page loads. The rest are fixed in the contract code.</p>
-          </div>
-          <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Suspense
-              fallback={
-                <>
-                  <Fact value="…" label="stock tokens with a fresh Chainlink feed right now" />
-                  <Fact value="…" label="Chainlink rounds read for the current board" />
-                  <Fact value="…" label="baseline forecasts replayed and scored over the rounds read (up to 12 days)" />
-                </>
-              }
-            >
-              <BoardFacts />
-            </Suspense>
-            <Fact value="3" label="horizons per token: one hour, one day, one week" />
-            <Fact value="1" label="way to pay for API calls: USDG, settled on chain" />
-            <Fact value="0" label="admin keys, fees, staking rewards or upgrade switches in the oracle" />
+      {/* 7. Built to be checked */}
+      <section className="pt-[110px]">
+        <div className="mx-auto max-w-[1440px] px-4 md:px-14">
+          <h2 className="h-mid max-w-[600px]">Every number here can be checked again</h2>
+          <div className="mt-14 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+            {[
+              ["3", "Horizons per token: one hour, one day, one week"],
+              [String(STOCKS.length), `Stock tokens with a Chainlink feed on ${CHAIN.name}`],
+              ["1", "Way to pay per API call: USDG, settled on chain"],
+              ["0", "Admin keys, fees or upgrade switches in the oracle"],
+              ["100", "Of oracle forecasts and their scores kept on chain", "%"],
+            ].map(([v, l, unit], i) => (
+              <Reveal key={l} delay={i * 90}>
+                <div className="flex h-[226px] flex-col justify-between rounded-[8px] border border-line bg-card px-5 pt-3 pb-5 max-sm:h-[180px]">
+                  <p className="flex items-start font-display text-[86px] leading-none tracking-[-0.04em] text-ink max-sm:text-[64px]">
+                    {v}
+                    {unit ? <span className="mt-2 font-sans text-[14px] tracking-normal text-ink-3">{unit}</span> : null}
+                  </p>
+                  <p className="max-w-[200px] text-[14px] leading-[1.2] text-ink-3">{l}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
-      </section>
-
-      {/* 9. Ticker */}
-      <section className="border-b border-line bg-paper-2 py-5" aria-label={`Stock tokens ${BRAND.name} forecasts`}>
-        <p className="ctn kicker mb-3">Forecasts for the stock tokens on {CHAIN.name}</p>
-        <div className="overflow-hidden">
-          <ul className="marquee flex w-max gap-10 pr-10">
+        <p className="mt-[150px] text-center text-[14px] text-ink-3 max-md:mt-20">Forecasts for the stock tokens on {CHAIN.name}</p>
+        <div className="mt-14 h-[166px] overflow-hidden" aria-label={`Stock tokens ${BRAND.name} forecasts`}>
+          <ul className="marquee flex w-max items-center gap-[78px] pr-[78px]">
             {[...STOCKS, ...STOCKS].map((s, i) => (
               <li key={`${s.symbol}-${i}`} aria-hidden={i >= STOCKS.length ? true : undefined}>
-                <Link href={`/markets/${s.symbol.toLowerCase()}`} className="font-display text-[24px] whitespace-nowrap text-ink-2 hover:text-stamp">
+                <Link
+                  href={`/markets/${s.symbol.toLowerCase()}`}
+                  tabIndex={i >= STOCKS.length ? -1 : undefined}
+                  className={`${TYPE_STYLES[i % TYPE_STYLES.length]} leading-none whitespace-nowrap text-ink/70 transition-colors hover:text-ink`}
+                >
                   {s.symbol}
                 </Link>
               </li>
@@ -315,64 +361,82 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 10. Questions */}
-      <section className="border-b border-line">
-        <div className="ctn py-16 md:py-24">
-          <h2 className="h-sec max-w-[760px]">Questions people bring, and the part of the product that answers them</h2>
-          <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-            {[
-              ["Consensus", "“Where are the best-ranked models leaning on chip and software tokens for the week, and how many have a live call?”", "Consensus signal · leaderboard", "/forecasts?h=1w", "md:row-span-2"],
-              ["Earnings", "“Before NVDA reports, is the model I copy any good in earnings weeks, or should I step away for a few days?”", "Earnings-week mode · model record", "/markets/nvda", ""],
-              ["Risk", "“Which of my holdings are the forecasters most split on right now?”", "Portfolio · divergence flag", "/portfolio", ""],
-            ].map(([k, q, from, href, extra]) => (
-              <Link key={k} href={href} className={`card group flex min-w-0 flex-col p-6 transition-colors hover:border-line-2 ${extra}`}>
-                <span className="kicker">{k}</span>
-                <span className="mt-4 font-display text-[22px] leading-snug text-ink">{q}</span>
-                <span className="mt-auto pt-6 text-[13.5px] text-ink-3">
-                  Answered by: {from} <span className="text-stamp">→</span>
-                </span>
-              </Link>
+      {/* 8. What people ask, and notes */}
+      <section className="border-t border-line">
+        <div className="relative">
+          <div className="sticky top-0 flex h-dvh items-center justify-center px-4">
+            <h2 className="mx-auto max-w-[640px] text-center font-display text-[clamp(44px,5.8vw,84px)] leading-[1.02] tracking-[-0.045em] text-ink">
+              Questions for {BRAND.name}
+            </h2>
+          </div>
+          <div className="relative -mt-[50dvh] flex flex-col items-center gap-6 px-4 pb-[300px]">
+            {ASKED.map((a) => (
+              <article
+                key={a.k}
+                className="flex h-[386px] w-full max-w-[416px] flex-col justify-between rounded-[10px] border border-line bg-[rgba(17,17,17,0.9)] p-[26px] backdrop-blur-xl max-sm:h-[320px]"
+              >
+                <p className="kicker !text-ink">{a.k}</p>
+                <p className="text-[17px] leading-[1.22] text-ink">{a.q}</p>
+                <div className="flex items-center gap-4">
+                  <span className="grid size-16 shrink-0 place-items-center rounded-[6px] bg-paper-3 text-ink">
+                    <Icon d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" />
+                  </span>
+                  <div className="min-w-0 flex-1 text-[13px] leading-[1.2]">
+                    <p className="text-ink">{a.tool}</p>
+                    <p className="text-ink-3">Built on: {a.from}</p>
+                  </div>
+                  <ArrowButton href={a.href} label={`Open ${a.tool}`} />
+                </div>
+              </article>
             ))}
           </div>
         </div>
-      </section>
-
-      {/* 11. Insights */}
-      <section className="border-b border-line bg-paper-2">
-        <div className="ctn py-16 md:py-24">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 className="h-sec">Insights on the design</h2>
-            <Link href="/docs" className="link text-[15px]">
-              All docs
+        <div className="mx-auto max-w-[1440px] px-4 pb-[140px] md:px-14">
+          <div className="flex items-end justify-between gap-6">
+            <h2 className="font-display text-[clamp(36px,4.45vw,64px)] leading-none tracking-[-0.045em] text-ink">Notes on how it works</h2>
+            <Link href="/docs" className="kicker shrink-0 rounded-full border border-line-2 px-5 py-[14px] !text-ink transition-colors hover:border-[#555]">
+              View all
             </Link>
           </div>
-          <div className="mt-10 grid grid-cols-1 divide-y divide-line border-y border-line">
-            {BLOG.map((n) => (
-              <Link key={n.href} href={n.href} className="group grid grid-cols-1 gap-2 py-6 sm:grid-cols-[160px_minmax(0,1fr)_auto] sm:items-baseline sm:gap-8">
-                <span className="kicker">{n.kicker}</span>
-                <span className="min-w-0">
-                  <span className="h-sub block group-hover:text-stamp">{n.title}</span>
-                  <span className="mt-1 block text-[15px] text-ink-2">{n.body}</span>
-                </span>
-                <span className="text-[13px] text-ink-3">{BRAND.name} team →</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 12. Closing */}
-      <section className="night">
-        <div className="ctn grid grid-cols-1 gap-8 py-20 md:py-28 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end">
-          <h2 className="h-hero min-w-0 !text-[clamp(40px,5.6vw,76px)]">Forecasts are cheap. Scores are earned.</h2>
-          <div className="flex min-w-0 flex-wrap gap-3 lg:justify-end">
-            <Btn href="/forecasts">Explore the forecasts</Btn>
-            <Btn href="/arena" tone="ghost">
-              Enter the arena
-            </Btn>
+          <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {NOTES.map((n) => {
+              const card = n.tone === "light" ? "bg-white text-[#0a0a0a]" : n.tone === "mid" ? "bg-paper-2 text-ink" : "bg-card text-ink";
+              const plate = n.tone === "light" ? "bg-[#ececec] text-[#0a0a0a]" : n.tone === "mid" ? "bg-white text-[#0a0a0a]" : "bg-paper-3 text-ink";
+              return (
+                <Link key={n.href} href={n.href} className={`flex min-h-[520px] flex-col rounded-[10px] border border-line p-4 transition-transform hover:-translate-y-1 max-md:min-h-0 ${card}`}>
+                  <div className={`grid h-[221px] place-items-center rounded-[6px] px-8 text-center ${plate}`}>
+                    <p className="font-display text-[26px] leading-[1.1] tracking-[-0.03em]">{n.title}</p>
+                  </div>
+                  <p className="mt-5 px-4 text-[17px] leading-[1.25]">{n.body}</p>
+                  <p className="mt-auto px-4 pt-10 pb-3 text-[13px]">{BRAND.name} Team</p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
     </>
+  );
+}
+
+function Connector() {
+  return (
+    <div className="relative mx-auto h-12 w-[290px] max-w-[70%]" aria-hidden="true">
+      <span className="absolute inset-x-0 top-0 h-6 border-x border-b border-dashed border-line-2" />
+      <span className="absolute top-6 left-1/2 h-6 border-l border-dashed border-line-2" />
+      <span className="absolute top-0 left-1/2 h-6 border-l border-dashed border-line-2" />
+    </div>
+  );
+}
+
+function SideNotes({ items, className = "" }: { items: string[]; className?: string }) {
+  return (
+    <ul className={`absolute left-[calc(100%+21px)] hidden w-[190px] flex-col gap-[30px] lg:flex ${className}`}>
+      {items.map((t) => (
+        <li key={t} className="border-l border-dashed border-[#3a3a3a] pl-4 text-[13px] leading-[1.3] text-ink-3">
+          {t}
+        </li>
+      ))}
+    </ul>
   );
 }

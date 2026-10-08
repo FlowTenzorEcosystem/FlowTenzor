@@ -9,7 +9,7 @@ export const APP_NAV: AppGroup[] = [
     items: [
       { href: "/ask", label: "Ask", hint: "Questions answered from live data" },
       { href: "/markets", label: "Markets", hint: "Every token's listing and chart" },
-      { href: "/pulse", label: "Pulse", hint: "Momentum across all feeds" },
+      { href: "/pulse", label: "Flow Pulse", hint: "Momentum across all feeds" },
       { href: "/tokens", label: "Stock tokens", hint: "On-chain bid, ask and premium" },
       { href: "/token", label: "$FLOWTENZOR", hint: "The project token" },
       { href: "/news", label: "News", hint: "Headlines per ticker" },
@@ -27,8 +27,8 @@ export const APP_NAV: AppGroup[] = [
   {
     label: "Network",
     items: [
-      { href: "/arena", label: "Arena", hint: "Sign or commit a forecast" },
-      { href: "/battle", label: "Model battle", hint: "House models side by side" },
+      { href: "/arena", label: "Forecast Arena", hint: "Sign or commit a forecast" },
+      { href: "/battle", label: "Model Battle", hint: "House models side by side" },
       { href: "/network", label: "Model network", hint: "Who forecasts, what is live" },
       { href: "/forecasts", label: "Forecasts", hint: "The feed for every token" },
       { href: "/leaderboard", label: "Leaderboard", hint: "Ranked by score" },

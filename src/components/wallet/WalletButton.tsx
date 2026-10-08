@@ -56,9 +56,9 @@ const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 function WalletIcon({ src }: { src: string | null }) {
   return src ? (
-    <img src={src} alt="" width={28} height={28} className="size-7 shrink-0" />
+    <img src={src} alt="" width={22} height={22} className="size-[22px] shrink-0 rounded-[5px]" />
   ) : (
-    <Wallet className="size-7 shrink-0 border border-line-2 p-1 text-ink-2" />
+    <Wallet className="size-[22px] shrink-0 rounded-[5px] border border-line-2 p-1 text-ink-2" />
   );
 }
 
@@ -103,8 +103,8 @@ function WalletDialog({ onClose }: { onClose: () => void }) {
   }
 
   const row =
-    "flex w-full items-center gap-3 rounded-[12px] border border-line bg-field px-3.5 py-3 text-left text-[15px] font-medium";
-  const heading = "pb-2 text-[13px] text-ink-3";
+    "flex h-11 w-full items-center gap-3 rounded-[6px] border border-line bg-card px-3 text-left text-[13.5px] text-ink";
+  const heading = "label pb-2 pl-0.5";
 
   // The header blurs what is behind it, and a backdrop filter turns it into
   // the containing block for fixed children. Rendered in place, the dialog
@@ -117,48 +117,51 @@ function WalletDialog({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-4"
     >
       <div className="absolute inset-0 bg-[rgba(0,0,0,0.6)]" onClick={close} />
-      <div className="relative flex max-h-[92dvh] w-full max-w-sm flex-col overflow-hidden sheet">
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <h2 id="wallet-dialog-title" className="font-display text-[26px] leading-tight text-ink">
-            Connect wallet
-          </h2>
+      <div className="panel relative flex max-h-[92dvh] w-full max-w-[400px] flex-col overflow-hidden !rounded-b-none bg-black sm:!rounded-[8px]">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <div>
+            <p className="label">Sign in</p>
+            <h2 id="wallet-dialog-title" className="mt-1.5 text-[17px] leading-tight font-medium tracking-[-0.02em] text-ink">
+              Connect a wallet
+            </h2>
+          </div>
           <button
             type="button"
             aria-label="Close"
             onClick={close}
-            className="cursor-pointer p-1 text-ink-3 transition-colors hover:text-ink"
+            className="grid size-7 cursor-pointer place-items-center rounded-[5px] border border-line text-ink-3 transition-colors hover:border-line-2 hover:text-ink"
           >
-            <X className="size-4" />
+            <X className="size-3.5" />
           </button>
         </div>
 
-        <p className="px-5 pt-4 text-[14px] leading-relaxed text-ink-2">
+        <p className="px-4 pt-3 text-[12.5px] leading-relaxed text-ink-3">
           Any EVM wallet that can add a custom network works on {chain.name}. Connecting only shares your address;
           signatures and swaps are asked for separately.
         </p>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-3">
           {installed.length ? (
             <>
               <p className={heading}>Detected in this browser</p>
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1.5">
                 {installed.map((wallet) => (
                   <li key={wallet.rdns}>
                     <button
                       type="button"
                       disabled={connecting || Boolean(wallet.unsupported)}
                       onClick={() => pick(wallet)}
-                      className={`${row} cursor-pointer transition-colors enabled:hover:border-ink enabled:hover:bg-paper-2 disabled:cursor-not-allowed disabled:opacity-50`}
+                      className={`${row} cursor-pointer transition-colors enabled:hover:border-line-2 enabled:hover:bg-paper-2 disabled:cursor-not-allowed disabled:opacity-45`}
                     >
                       <WalletIcon src={wallet.icon || catalogIcon(wallet.rdns)} />
                       <span className="min-w-0 flex-1">
                         <span className="block">{wallet.name}</span>
-                        <span className="block text-[12.5px] font-normal text-ink-3">
+                        <span className="block text-[11.5px] text-ink-3">
                           {wallet.unsupported ? `Not supported · ${wallet.unsupported}` : "Installed"}
                         </span>
                       </span>
                       {pending === wallet.rdns ? (
-                        <span className="text-[12.5px] text-ink-3">Check wallet</span>
+                        <span className="label !text-ink">Check wallet</span>
                       ) : null}
                     </button>
                   </li>
@@ -173,24 +176,24 @@ function WalletDialog({ onClose }: { onClose: () => void }) {
               type="button"
               disabled={connecting}
               onClick={() => pick(walletConnect)}
-              className={`${row} cursor-pointer transition-colors enabled:hover:border-ink enabled:hover:bg-paper-2 disabled:opacity-50`}
+              className={`${row} cursor-pointer transition-colors enabled:hover:border-line-2 enabled:hover:bg-paper-2 disabled:opacity-45`}
               data-testid="wallet-walletconnect"
             >
               <WalletIcon src="/wallets/walletconnect.webp" />
               <span className="min-w-0 flex-1">
                 <span className="block">WalletConnect</span>
-                <span className="block text-[12.5px] font-normal text-ink-3">Scan a QR code with a mobile wallet</span>
+                <span className="block text-[11.5px] text-ink-3">Scan a QR code with a mobile wallet</span>
               </span>
               {pending === WALLETCONNECT_RDNS ? (
-                <span className="text-[12.5px] text-ink-3">Opening</span>
+                <span className="label !text-ink">Opening</span>
               ) : null}
             </button>
           ) : (
-            <div className={`${row} opacity-50`} data-testid="wallet-walletconnect">
+            <div className={`${row} opacity-45`} data-testid="wallet-walletconnect">
               <WalletIcon src="/wallets/walletconnect.webp" />
               <span className="min-w-0 flex-1">
                 <span className="block">WalletConnect</span>
-                <span className="block text-[12.5px] font-normal text-ink-3">Not configured on this site yet</span>
+                <span className="block text-[11.5px] text-ink-3">Not configured on this site yet</span>
               </span>
             </div>
           )}
@@ -200,7 +203,7 @@ function WalletDialog({ onClose }: { onClose: () => void }) {
               <p className={`${heading} pt-4`}>
                 {mobile ? "Open this site in a wallet app" : `Not installed · supports ${chain.name}`}
               </p>
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1.5">
                 {more.map((w) => {
                   const href = mobile && w.deepLink ? w.deepLink(here) : w.install;
                   const label = mobile && w.deepLink ? "Open" : "Install";
@@ -210,11 +213,11 @@ function WalletDialog({ onClose }: { onClose: () => void }) {
                         href={href}
                         target="_blank"
                         rel="noreferrer"
-                        className={`${row} transition-colors hover:border-ink hover:bg-paper-2`}
+                        className={`${row} transition-colors hover:border-line-2 hover:bg-paper-2`}
                       >
                         <WalletIcon src={`/wallets/${w.id}.webp`} />
                         <span className="min-w-0 flex-1">{w.name}</span>
-                        <span className="inline-flex items-center gap-1 text-[13px] text-stamp">
+                        <span className="label inline-flex items-center gap-1 rounded-[3px] border border-line-2 px-1.5 py-1 !text-ink">
                           {label} <ExternalLink className="size-3" />
                         </span>
                       </a>
@@ -227,14 +230,15 @@ function WalletDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         {error ? (
-          <p className="flex items-start gap-2 border-t border-line px-5 py-3 text-[13px] leading-relaxed text-down">
+          <p className="flex items-start gap-2 border-t border-line px-4 py-3 text-[12.5px] leading-relaxed text-ink-2">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
             <span>{error}</span>
           </p>
         ) : null}
 
-        <p className="border-t border-line px-5 py-3 text-[12.5px] text-ink-3">
-          {chain.name} · chain id {chain.id} · added to your wallet on connect
+        <p className="label flex items-center gap-2 border-t border-line px-4 py-3 !normal-case !tracking-normal">
+          <span className="size-1.5 rounded-full bg-ink" />
+          <span className="text-ink-2">{chain.name}</span> · chain id {chain.id} · added to your wallet on connect
         </p>
       </div>
     </div>,
@@ -251,12 +255,29 @@ export function NavWallet({ compact = false }: { compact?: boolean }) {
   const { open } = useWalletModal();
   if (address) return <AccountMenu compact={compact} />;
   return (
-    <button
-      type="button"
-      onClick={open}
-      className={`btn btn-accent btn-sm whitespace-nowrap ${compact ? "!min-h-[38px] !px-3 !text-[13px]" : "!px-[30px]"}`}
-    >
-      {compact ? "Connect" : "Connect wallet"}
+    <button type="button" onClick={open} className="abtn whitespace-nowrap" data-testid="nav-connect">
+      Sign in
+    </button>
+  );
+}
+
+function MenuRow({ children, onClick, href, external, testid }: { children: React.ReactNode; onClick?: () => void; href?: string; external?: boolean; testid?: string }) {
+  const cls = "flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-[5px] px-2.5 text-left text-[13px] text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink";
+  if (href && external)
+    return (
+      <a role="menuitem" href={href} target="_blank" rel="noreferrer" className={cls} data-testid={testid}>
+        {children}
+      </a>
+    );
+  if (href)
+    return (
+      <Link role="menuitem" href={href} onClick={onClick} className={cls} data-testid={testid}>
+        {children}
+      </Link>
+    );
+  return (
+    <button type="button" role="menuitem" onClick={onClick} className={cls} data-testid={testid}>
+      {children}
     </button>
   );
 }
@@ -282,12 +303,12 @@ function AccountMenu({ compact }: { compact: boolean }) {
 
   useEffect(() => {
     if (!open) return;
-    const WIDTH = 300;
+    const WIDTH = 296;
     const position = () => {
       const rect = root.current?.getBoundingClientRect();
       if (!rect) return;
       const left = Math.max(8, Math.min(rect.right - WIDTH, window.innerWidth - WIDTH - 8));
-      setPlace({ top: rect.bottom + 8, left });
+      setPlace({ top: rect.bottom + 6, left });
     };
     position();
     const onPointer = (event: PointerEvent) => {
@@ -313,17 +334,17 @@ function AccountMenu({ compact }: { compact: boolean }) {
   const wrongNetwork = chainId !== null && !onRobinhoodChain;
 
   return (
-    <div ref={root} className="flex items-center gap-2">
-      {wrongNetwork ? (
+    <div ref={root} className="flex shrink-0 items-center gap-1.5">
+      {wrongNetwork && !compact ? (
         <button
           type="button"
           onClick={switchNetwork}
           disabled={switching}
           title={`Wallet is on chain ${chainId}. Switch to ${chain.name}.`}
-          className="flex h-[41px] cursor-pointer items-center gap-1.5 rounded-full border border-down px-3.5 text-[13px] font-medium whitespace-nowrap text-down transition-colors hover:bg-down-soft disabled:opacity-60"
+          className="abtn !border-dashed !text-ink"
         >
           <TriangleAlert className="size-3.5" />
-          {switching ? "Confirm…" : compact ? `Chain ${chainId}` : `Wrong network · ${chainId}`}
+          {switching ? "Confirm…" : `Chain ${chainId}`}
         </button>
       ) : null}
       <button
@@ -331,14 +352,16 @@ function AccountMenu({ compact }: { compact: boolean }) {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="flex h-[41px] cursor-pointer items-center gap-2 rounded-full border border-ink/70 bg-transparent px-3.5 text-[14px] font-medium text-ink transition-colors hover:bg-paper-2"
+        data-testid="wallet-chip"
+        className={`flex h-8 cursor-pointer items-center gap-2 rounded-[6px] border bg-card pr-2 pl-2.5 transition-colors hover:border-line-2 ${open ? "border-line-2" : "border-line"}`}
       >
-        <span className={`size-[8px] rounded-full ${onRobinhoodChain ? "bg-up" : "bg-down"}`} />
-        <span className="font-mono text-[13px]">{shortAddress(address, compact ? 4 : 6, 4)}</span>
-        {!compact && balance !== null ? (
-          <span className="hidden text-up lg:inline">{balance} ETH</span>
-        ) : null}
-        {compact ? null : <ChevronDown className="size-3 text-ink-3" />}
+        <span
+          className={`size-[7px] rounded-full ${onRobinhoodChain ? "bg-[#4fd69a] shadow-[0_0_6px_#4fd69a]" : "bg-[#f2826a] shadow-[0_0_6px_#f2826a]"}`}
+          data-testid="wallet-dot"
+          data-network={onRobinhoodChain ? "ok" : "wrong"}
+        />
+        <span className="num text-[11.5px] text-ink">{shortAddress(address, compact ? 4 : 6, 4)}</span>
+        <ChevronDown className={`size-3 text-ink-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && place
@@ -347,45 +370,50 @@ function AccountMenu({ compact }: { compact: boolean }) {
               ref={menu}
               role="menu"
               style={{ position: "fixed", top: place.top, left: place.left }}
-              className="sheet z-[80] w-[300px] overflow-hidden"
+              className="panel z-[80] w-[296px] overflow-hidden bg-black"
+              data-testid="wallet-menu"
             >
-              <div className="border-b border-line px-4 py-3">
-                <p className="text-[13px] text-ink-3">{walletName ?? "Wallet"}</p>
-                <p className="mt-1 font-mono text-[13px] text-ink">{shortAddress(address, 10, 8)}</p>
-                <p className="serif mt-2 text-[20px] leading-tight text-ink">
-                  {balance === null ? "…" : `${balance} ${chain.nativeSymbol}`}
-                </p>
-                <p className="serif text-[20px] leading-tight text-ink" data-testid="menu-usdg">
-                  {usdg === null ? "… USDG" : `${usdg} USDG`}
-                </p>
-                <p className={`chip mt-2 ${wrongNetwork ? "chip-down" : "chip-up"}`}>
-                  {chainId === null
-                    ? "Reading network…"
-                    : onRobinhoodChain
-                      ? `On ${chain.name}`
-                      : `On chain ${chainId}, not ${chain.name}`}
-                </p>
-              </div>
-
-              {wrongNetwork ? (
-                <div className="border-b border-line p-2">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    disabled={switching}
-                    onClick={switchNetwork}
-                    className="btn btn-accent h-9 w-full justify-center px-3 text-[14px] disabled:opacity-60"
-                  >
-                    {switching ? "Confirm in wallet…" : `Switch to ${chain.name}`}
-                  </button>
-                  {error ? <p className="mt-2 px-1 text-[10px] leading-relaxed text-down">{error}</p> : null}
+              <div className="border-b border-line p-3">
+                <div className="flex items-center justify-between">
+                  <p className="label">{walletName ?? "Wallet"}</p>
+                  <span className={`chip !py-0 ${wrongNetwork ? "!border-dashed" : ""}`}>
+                    {chainId === null ? "Reading" : onRobinhoodChain ? `RHC · ${chain.id}` : `Chain ${chainId}`}
+                  </span>
                 </div>
-              ) : null}
-
-              <div className="flex flex-col py-1.5 text-[14px]">
-                <button
-                  type="button"
-                  role="menuitem"
+                <p className="num mt-2 text-[12.5px] text-ink">{shortAddress(address, 10, 8)}</p>
+                <dl className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-[5px] border border-line bg-line">
+                  <div className="bg-card px-2.5 py-2">
+                    <dt className="label">{chain.nativeSymbol}</dt>
+                    <dd className="num mt-1 text-[13px] text-ink" data-testid="menu-eth">
+                      {balance === null ? "…" : balance}
+                    </dd>
+                  </div>
+                  <div className="bg-card px-2.5 py-2">
+                    <dt className="label">USDG</dt>
+                    <dd className="num mt-1 text-[13px] text-ink" data-testid="menu-usdg">
+                      {usdg === null ? "…" : usdg}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="mt-2 flex items-center justify-between gap-2 rounded-[5px] border border-line px-2.5 py-1.5">
+                  <span className="flex items-center gap-1.5 text-[12px] text-ink-2">
+                    <span className={`size-1.5 rounded-full ${onRobinhoodChain ? "bg-[#4fd69a]" : "bg-[#f2826a]"}`} />
+                    {chainId === null ? "Reading network…" : onRobinhoodChain ? `On ${chain.name}` : `Not on ${chain.name}`}
+                  </span>
+                  {wrongNetwork ? (
+                    <button type="button" role="menuitem" disabled={switching} onClick={switchNetwork} className="abtn abtn-face !h-6 !px-2 !text-[11.5px]" data-testid="menu-switch">
+                      {switching ? "Confirm…" : "Switch"}
+                    </button>
+                  ) : null}
+                </div>
+                {error && wrongNetwork ? <p className="mt-2 text-[11px] leading-relaxed text-ink-3">{error}</p> : null}
+              </div>
+              <div className="flex flex-col p-1.5">
+                <MenuRow href="/arena" onClick={() => setOpen(false)}>
+                  <LayoutList className="size-3.5" /> Open app · your forecasts
+                </MenuRow>
+                <MenuRow
+                  testid="menu-copy"
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(address);
@@ -395,60 +423,30 @@ function AccountMenu({ compact }: { compact: boolean }) {
                       // Clipboard refused; the address above stays readable.
                     }
                   }}
-                  className="flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-ink transition-colors hover:bg-paper-2"
                 >
-                  {copied ? <Check className="size-3.5 text-up" /> : <Copy className="size-3.5" />}
+                  {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                   {copied ? "Copied" : "Copy address"}
-                </button>
-                <Link
-                  role="menuitem"
-                  href="/arena"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-ink transition-colors hover:bg-paper-2"
-                >
-                  <LayoutList className="size-3.5" />
-                  Open app · your forecasts
-                </Link>
-                <Link
-                  role="menuitem"
-                  href="/token"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-ink transition-colors hover:bg-paper-2"
-                >
-                  <Landmark className="size-3.5" />
-                  Token · {BRAND.symbol}
-                </Link>
-                <Link
-                  role="menuitem"
-                  href="/swap"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-ink transition-colors hover:bg-paper-2"
-                >
-                  <ArrowLeftRight className="size-3.5" />
-                  Swap {BRAND.symbol}
-                </Link>
-                <a
-                  role="menuitem"
-                  href={explorerAddress(address)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-ink transition-colors hover:bg-paper-2"
-                >
-                  <ExternalLink className="size-3.5" />
-                  View on explorer
-                </a>
-                <button
-                  type="button"
-                  role="menuitem"
+                </MenuRow>
+                <MenuRow href="/token" onClick={() => setOpen(false)}>
+                  <Landmark className="size-3.5" /> Token · {BRAND.symbol}
+                </MenuRow>
+                <MenuRow href="/swap" onClick={() => setOpen(false)}>
+                  <ArrowLeftRight className="size-3.5" /> Swap {BRAND.symbol}
+                </MenuRow>
+                <MenuRow href={explorerAddress(address)} external>
+                  <ExternalLink className="size-3.5" /> View on explorer
+                </MenuRow>
+              </div>
+              <div className="border-t border-line p-1.5">
+                <MenuRow
+                  testid="menu-disconnect"
                   onClick={() => {
                     setOpen(false);
                     disconnect();
                   }}
-                  className="flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-down transition-colors hover:bg-paper-2"
                 >
-                  <LogOut className="size-3.5" />
-                  Disconnect
-                </button>
+                  <LogOut className="size-3.5" /> Disconnect
+                </MenuRow>
               </div>
             </div>,
             document.body,

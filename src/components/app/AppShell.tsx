@@ -1,16 +1,39 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BRAND, CHAIN, TOKEN, shortAddress } from "@/config/brand";
+import {
+  Activity,
+  BarChart3,
+  Bell,
+  BookOpen,
+  CalendarDays,
+  CircleDollarSign,
+  Coins,
+  Crosshair,
+  LayoutGrid,
+  LineChart,
+  MessageSquareText,
+  MoreHorizontal,
+  Network,
+  Newspaper,
+  Search,
+  Settings,
+  Swords,
+  Trophy,
+  Users,
+  Wallet,
+} from "lucide-react";
+import { BRAND, CHAIN, TOKEN } from "@/config/brand";
+import { oracleLive } from "@/config/contracts";
 import { STOCKS } from "@/config/stocks";
-import { CopyCaTag } from "@/components/CopyCa";
-import { Wordmark } from "@/components/Mark";
+import { CaConsole } from "@/components/CopyCa";
+import { Mark } from "@/components/Mark";
 import { useChain } from "@/components/providers/ChainProvider";
+import { Arrow, DocsGlyph, XGlyph, buyHref } from "@/components/SiteHeader";
 import { NavWallet } from "@/components/wallet/WalletButton";
-import { useWallet } from "@/components/wallet/WalletProvider";
 import { useLocalStore } from "@/components/wallet/useLocalStore";
 import { ALL_APP_LINKS, APP_NAV } from "./nav";
 
@@ -22,6 +45,83 @@ export function usePrefs() {
   const [p, set] = useLocalStore<Prefs>("flowtenzor:prefs", DEFAULT_PREFS);
   return [{ ...DEFAULT_PREFS, ...p }, set] as const;
 }
+
+const ICON: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+  "/ask": MessageSquareText,
+  "/markets": LineChart,
+  "/pulse": LayoutGrid,
+  "/tokens": Coins,
+  "/token": CircleDollarSign,
+  "/news": Newspaper,
+  "/analytics": BarChart3,
+  "/calendar": CalendarDays,
+  "/portfolio": Wallet,
+  "/alerts": Bell,
+  "/arena": Crosshair,
+  "/battle": Swords,
+  "/network": Network,
+  "/forecasts": Activity,
+  "/leaderboard": Trophy,
+  "/follow": Users,
+  "/settings": Settings,
+};
+
+/* ------------------------------------------------------------------ live strip data */
+
+type StripRow = { symbol: string; price: number | null; change24h: number | null };
+type Tao = { last: number; change24h: number | null } | null;
+type Live = { rows: StripRow[]; tao: Tao; latency: number | null; updated: number | null };
+const LiveCtx = createContext<Live>({ rows: [], tao: null, latency: null, updated: null });
+
+/** One poller for the ticker, the sidebar card and the status bar. */
+export function AppLiveProvider({ children }: { children: React.ReactNode }) {
+  const [live, setLive] = useState<Live>({ rows: [], tao: null, latency: null, updated: null });
+  useEffect(() => {
+    let off = false;
+    const load = async () => {
+      const t0 = performance.now();
+      const [b, t] = await Promise.all([
+        fetch("/api/board?strip=1", { cache: "no-store" })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+        fetch("/api/tao")
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+      ]);
+      if (off) return;
+      setLive((v) => ({
+        rows: b?.rows ?? v.rows,
+        tao: t?.last ? { last: t.last, change24h: t.change24h ?? null } : v.tao,
+        latency: b ? Math.round(performance.now() - t0) : v.latency,
+        updated: b ? Date.now() : v.updated,
+      }));
+    };
+    load();
+    const id = window.setInterval(() => document.visibilityState === "visible" && load(), 60_000);
+    return () => {
+      off = true;
+      window.clearInterval(id);
+    };
+  }, []);
+  return <LiveCtx.Provider value={live}>{children}</LiveCtx.Provider>;
+}
+const useLive = () => useContext(LiveCtx);
+
+/** "▲ +0.52%" in white or "▼ −0.92%" in grey. `v` is a fraction when `fraction`, else a percent. */
+export function Delta({ v, fraction = true, className = "" }: { v: number | null | undefined; fraction?: boolean; className?: string }) {
+  if (v == null || !Number.isFinite(v)) return <span className={`num text-faint ${className}`}>–</span>;
+  const p = fraction ? v * 100 : v;
+  const upv = p >= 0;
+  return (
+    <span className={`num whitespace-nowrap ${upv ? "text-up" : "text-down"} ${className}`}>
+      <span className="text-[0.8em]">{upv ? "▲" : "▼"}</span>
+      {upv ? "+" : "−"}
+      {Math.abs(p).toFixed(2)}%
+    </span>
+  );
+}
+
+const price = (v: number | null) => (v == null ? "–" : `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 
 /* ------------------------------------------------------------------ palette */
 
@@ -46,24 +146,27 @@ function Palette({ onClose }: { onClose: () => void }) {
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-start justify-center p-4 pt-[12vh]" role="dialog" aria-modal="true" aria-label="Search">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-      <div className="relative w-full max-w-[560px] overflow-hidden rounded-[12px] border border-line-2 bg-paper-2 shadow-2xl">
-        <input
-          ref={input}
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setI(0);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") onClose();
-            if (e.key === "ArrowDown") setI((x) => Math.min(items.length - 1, x + 1));
-            if (e.key === "ArrowUp") setI((x) => Math.max(0, x - 1));
-            if (e.key === "Enter" && items[i]) go(items[i].href);
-          }}
-          placeholder="Search tokens and pages"
-          className="w-full border-b border-line bg-transparent px-4 py-3.5 text-[15px] text-ink outline-none"
-          aria-label="Search tokens and pages"
-        />
+      <div className="panel relative w-full max-w-[560px] overflow-hidden shadow-2xl">
+        <div className="flex items-center gap-2 border-b border-line px-3">
+          <Search className="size-3.5 text-ink-3" />
+          <input
+            ref={input}
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setI(0);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") onClose();
+              if (e.key === "ArrowDown") setI((x) => Math.min(items.length - 1, x + 1));
+              if (e.key === "ArrowUp") setI((x) => Math.max(0, x - 1));
+              if (e.key === "Enter" && items[i]) go(items[i].href);
+            }}
+            placeholder="Search symbols, pages…"
+            className="w-full bg-transparent py-3 text-[14px] text-ink outline-none placeholder:text-faint"
+            aria-label="Search symbols and pages"
+          />
+        </div>
         <ul className="max-h-[50vh] overflow-y-auto p-1.5" role="listbox">
           {items.map((it, k) => (
             <li key={it.href} role="option" aria-selected={k === i}>
@@ -71,242 +174,374 @@ function Palette({ onClose }: { onClose: () => void }) {
                 type="button"
                 onMouseEnter={() => setI(k)}
                 onClick={() => go(it.href)}
-                className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-[8px] px-3 py-2 text-left ${k === i ? "bg-paper-3" : ""}`}
+                className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-[5px] px-3 py-2 text-left ${k === i ? "bg-paper-3" : ""}`}
               >
-                <span className="min-w-0">
-                  <span className="font-medium text-ink">{it.label}</span> <span className="text-[13px] text-ink-3">{it.hint}</span>
+                <span className="min-w-0 truncate">
+                  <span className="text-[13.5px] text-ink">{it.label}</span> <span className="text-[12.5px] text-ink-3">{it.hint}</span>
                 </span>
-                <span className="kicker shrink-0">{it.kind}</span>
+                <span className="label shrink-0">{it.kind}</span>
               </button>
             </li>
           ))}
-          {!items.length ? <li className="px-3 py-4 text-[14px] text-ink-3">Nothing matches.</li> : null}
+          {!items.length ? <li className="px-3 py-4 text-[13px] text-ink-3">Nothing matches.</li> : null}
         </ul>
-        <p className="kicker border-t border-line px-4 py-2">↑↓ choose · ↵ open · esc close</p>
+        <p className="label border-t border-line px-4 py-2.5">↑↓ choose · ↵ open · esc close</p>
       </div>
     </div>,
     document.body,
   );
 }
 
-/* ------------------------------------------------------------------ header */
-
-function useStockStrip() {
-  const [rows, setRows] = useState<{ symbol: string; price: number | null }[]>([]);
-  useEffect(() => {
-    let off = false;
-    const load = () =>
-      fetch("/api/stocks", { cache: "no-store" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((b: { rows: { symbol: string; price: number | null }[] } | null) => b && !off && setRows(b.rows))
-        .catch(() => {});
-    load();
-    const t = window.setInterval(() => document.visibilityState === "visible" && load(), 60_000);
-    return () => {
-      off = true;
-      window.clearInterval(t);
-    };
-  }, []);
-  return rows;
-}
-
-function Ticker() {
-  const rows = useStockStrip();
-  if (!rows.length) return <div className="h-9 border-t border-line" />;
-  const list = [...rows, ...rows];
-  return (
-    <div className="overflow-hidden border-t border-line bg-paper" aria-label="Chainlink prices of stock tokens">
-      <ul className="marquee flex w-max">
-        {list.map((r, i) => (
-          <li key={`${r.symbol}-${i}`} aria-hidden={i >= rows.length ? true : undefined} className="border-r border-line px-4 py-2 text-[12.5px] whitespace-nowrap">
-            <Link href={`/markets/${r.symbol.toLowerCase()}`} className="num text-ink-2 hover:text-stamp">
-              <span className="text-ink">{r.symbol}</span> {r.price != null ? `$${r.price >= 1000 ? r.price.toFixed(0) : r.price.toFixed(2)}` : "–"}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export function AppHeader() {
-  const pathname = usePathname();
-  const [palette, setPalette] = useState(false);
-  const [menu, setMenu] = useState(false);
-  const { address } = useWallet();
+function usePalette() {
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setPalette(true);
+        setOpen(true);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const group = APP_NAV.find((g) => g.items.some((i) => active(i.href))) ?? APP_NAV[0];
+  return [open, setOpen] as const;
+}
+
+const useActive = () => {
+  const pathname = usePathname();
+  return (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+};
+
+/* ------------------------------------------------------------------ sidebar */
+
+function TokenCard() {
+  const { facts } = useChain();
+  const { tao } = useLive();
+  const buy = buyHref();
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-paper">
-      <div className="mx-auto flex h-[60px] max-w-[1560px] items-center gap-3 px-4 sm:px-6" data-testid="navrow">
-        <Link href="/" aria-label={`${BRAND.name} home`} className="shrink-0 text-ink">
-          <Wordmark size={19} className={address ? "max-[460px]:[&>span:last-child]:hidden" : ""} />
-        </Link>
-        <button
-          type="button"
-          onClick={() => setPalette(true)}
-          className="ml-2 hidden h-9 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-[8px] border border-line-2 px-3 text-[13.5px] text-ink-3 md:flex md:max-w-[360px]"
-          aria-label="Search tokens and pages"
-        >
-          <span>Search tokens, pages…</span>
-          <span className="kicker rounded border border-line-2 px-1.5">⌘K</span>
-        </button>
-        <div className="ml-auto flex min-w-0 items-center gap-2 max-[560px]:gap-1.5">
-          <button type="button" onClick={() => setPalette(true)} aria-label="Search" className="grid size-9 cursor-pointer place-items-center rounded-[8px] border border-line-2 text-ink-2 md:hidden">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <path d="M20 20l-3.5-3.5" />
-            </svg>
-          </button>
-          <CopyCaTag compact />
-          <Link href="/docs" className="btn btn-ghost btn-sm hidden lg:inline-flex">
-            Docs
-          </Link>
-          <span className="hidden sm:block">
-            <NavWallet />
-          </span>
-          <span className="sm:hidden">
-            <NavWallet compact />
-          </span>
-          <button type="button" aria-label="Open menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)} className="grid size-9 cursor-pointer place-items-center text-ink lg:hidden">
-            <svg width="20" height="14" viewBox="0 0 24 18" aria-hidden="true">
-              <path d="M0 1h24M0 9h24M0 17h24" stroke="currentColor" strokeWidth="1.8" />
-            </svg>
-          </button>
+    <div className="relative mx-2 overflow-hidden rounded-[8px] border border-white/10 bg-[linear-gradient(160deg,rgba(255,255,255,0.09),rgba(255,255,255,0.01)_60%)]" data-testid="rail-token">
+      <span className="pointer-events-none absolute -top-12 -right-12 size-32 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+      <Link href="/token" className="relative block p-3">
+        <div className="flex items-center gap-2">
+          <span className="num text-[14px] font-medium tracking-[-0.03em] text-ink">{BRAND.symbol}</span>
+          <span className="chip !px-1.5 !py-0 before:hidden">{TOKEN.isLive ? "Live on RHC" : "At launch"}</span>
+        </div>
+        <dl className="mt-2.5 grid grid-cols-2 gap-px overflow-hidden rounded-[5px] border border-white/[0.07] bg-white/[0.07]">
+          <div className="bg-black/60 px-2 py-1.5">
+            <dt className="label">Price</dt>
+            <dd className="num mt-1 text-[11.5px] text-ink">{TOKEN.isLive ? "on Pons" : "–"}</dd>
+          </div>
+          <div className="bg-black/60 px-2 py-1.5" data-testid="rail-chain">
+            <dt className="label">Block</dt>
+            <dd className="num mt-1 flex items-center gap-1 text-[11.5px] text-ink">
+              <span className={`size-1.5 rounded-full ${facts?.block ? "bg-ink" : "bg-faint"}`} />
+              {facts?.block ? facts.block.toLocaleString("en-US") : "–"}
+            </dd>
+          </div>
+        </dl>
+      </Link>
+      <div className="relative grid gap-1.5 px-3 pb-3">
+        <CaConsole fit="short" explorer={false} className="!bg-black/60 !text-[11px]" testid="ca-console-rail" />
+        <div className="grid grid-cols-2 gap-1.5">
+          <a href={buy} {...(buy.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})} className="abtn abtn-face !h-7 !text-[11.5px]">
+            Buy {TOKEN.isLive ? "on Pons" : ""} <Arrow />
+          </a>
+          {TOKEN.explorerUrl ? (
+            <a href={TOKEN.explorerUrl} target="_blank" rel="noreferrer" className="abtn !h-7 !border-white/10 !text-[11.5px]">
+              Explorer <Arrow />
+            </a>
+          ) : (
+            <span className="abtn !h-7 cursor-default !border-white/10 !text-[11.5px] opacity-50">
+              Explorer <Arrow />
+            </span>
+          )}
         </div>
       </div>
-      {/* Desktop: group tabs on one row, the active group's pages on the next. */}
-      <nav aria-label="App" className="mx-auto hidden max-w-[1560px] items-center gap-6 px-6 lg:flex">
-        <ul className="flex items-center gap-1 border-r border-line pr-5">
-          {APP_NAV.map((g) => (
-            <li key={g.label}>
-              <Link
-                href={g.items[0].href}
-                aria-current={g === group ? "true" : undefined}
-                className={`kicker block rounded px-2.5 py-1.5 ${g === group ? "!text-ink bg-paper-3" : "hover:!text-ink"}`}
-              >
-                {g.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <ul className="flex min-w-0 items-center gap-1 overflow-x-auto">
-          {group.items.map((it) => (
-            <li key={it.href}>
-              <Link
-                href={it.href}
-                aria-current={active(it.href) ? "page" : undefined}
-                className={`block border-b-2 px-2.5 py-3 text-[14px] whitespace-nowrap ${active(it.href) ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink"}`}
-              >
-                {it.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      {menu ? (
-        <nav aria-label="App menu" className="max-h-[75vh] overflow-y-auto border-t border-line bg-paper-2 px-4 pb-6 lg:hidden">
-          {APP_NAV.map((g) => (
-            <div key={g.label} className="pt-4">
-              <p className="kicker">{g.label}</p>
-              <ul className="mt-2 grid grid-cols-2 gap-1">
-                {g.items.map((it) => (
+      <Link href="/network" className="relative flex items-center gap-2 border-t border-white/[0.07] px-3 py-2 text-[11.5px]">
+        <span className="grid size-4 place-items-center rounded-[5px] bg-gradient-to-b from-white to-[#cfcfcf] text-[11px] font-semibold text-black">τ</span>
+        <span className="text-ink-3">Bittensor</span>
+        <span className="num ml-auto text-ink/85">{tao ? price(tao.last) : "–"}</span>
+        <Delta v={tao?.change24h ?? null} fraction={false} className="text-[10.5px]" />
+      </Link>
+    </div>
+  );
+}
+
+function Sidebar() {
+  const active = useActive();
+  return (
+    <aside className="hidden h-full w-[232px] shrink-0 flex-col border-r border-white/[0.07] bg-gradient-to-b from-[#0a0a0a] to-[#050505] lg:flex" aria-label="App">
+      <Link href="/" className="flex h-12 shrink-0 items-center justify-between border-b border-white/[0.07] px-4 text-ink" aria-label={`${BRAND.name} home`}>
+        <span className="flex items-center gap-2 text-[15px] font-medium tracking-[-0.03em]">
+          <Mark size={18} /> {BRAND.name}
+        </span>
+        <span className="chip !px-1.5 !py-0.5 before:hidden">Beta</span>
+      </Link>
+      <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+        {APP_NAV.map((g) => (
+          <div key={g.label} className="mb-2.5">
+            <p className="label px-2 pb-1">{g.label}</p>
+            <ul>
+              {g.items.map((it) => {
+                const I = ICON[it.href] ?? Activity;
+                const on = active(it.href);
+                return (
                   <li key={it.href}>
-                    <Link href={it.href} onClick={() => setMenu(false)} className={`block rounded-[8px] px-3 py-2.5 text-[15px] ${active(it.href) ? "bg-paper-3 text-ink" : "text-ink-2"}`}>
+                    <Link
+                      href={it.href}
+                      aria-current={on ? "page" : undefined}
+                      title={it.hint}
+                      className={`relative flex h-7 items-center gap-2.5 rounded-[5px] px-2 text-[13.5px] transition-colors ${on ? "bg-gradient-to-r from-white/10 to-white/[0.02] text-ink" : "text-ink-3 hover:bg-white/[0.04] hover:text-ink"}`}
+                    >
+                      {on ? <span className="absolute top-1.5 -left-2 h-4 w-[2px] rounded-r bg-white" /> : null}
+                      <I className="size-[15px] shrink-0" strokeWidth={1.6} />
                       {it.label}
                     </Link>
                   </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-          <Link href="/docs" onClick={() => setMenu(false)} className="btn btn-ghost btn-sm mt-5 w-full">
-            Docs
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+      <div className="shrink-0 pb-1">
+        <TokenCard />
+        <div className="flex items-center gap-1 px-3 pt-2 pb-2.5">
+          <a href={BRAND.x} target="_blank" rel="noreferrer" aria-label={`${BRAND.name} on X`} className="grid size-7 place-items-center rounded-[5px] text-ink-3 hover:bg-white/5 hover:text-ink">
+            <XGlyph />
+          </a>
+          <Link href="/docs" aria-label="Documentation" className="grid size-7 place-items-center rounded-[5px] text-ink-3 hover:bg-white/5 hover:text-ink">
+            <DocsGlyph />
           </Link>
-        </nav>
-      ) : null}
-      {palette ? <Palette onClose={() => setPalette(false)} /> : null}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* ------------------------------------------------------------------ top bar */
+
+function TopBar({ onSearch }: { onSearch: () => void }) {
+  const active = useActive();
+  const group = APP_NAV.find((g) => g.items.some((i) => active(i.href)));
+  const page = group?.items.find((i) => active(i.href));
+  const buy = buyHref();
+  return (
+    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-white/[0.07] bg-black/60 px-4 max-lg:sticky max-lg:top-0 max-lg:z-30 max-lg:bg-black max-sm:px-3" data-testid="navrow">
+      <Link href="/" className="text-ink lg:hidden" aria-label={`${BRAND.name} home`}>
+        <Mark size={20} />
+      </Link>
+      <p className="flex min-w-0 items-center gap-1.5 text-[13px]">
+        <span className="text-faint max-lg:hidden">{group?.label ?? "App"}</span>
+        <span className="text-faint max-lg:hidden">/</span>
+        <span className="truncate text-ink">{page?.label ?? ""}</span>
+      </p>
+      <button
+        type="button"
+        onClick={onSearch}
+        className="ml-2 hidden h-8 w-[200px] min-w-0 cursor-pointer xl:w-[340px] items-center gap-2 rounded-[5px] border border-line bg-card px-2.5 text-[12.5px] text-ink-3 md:flex"
+        aria-label="Search symbols and pages"
+      >
+        <Search className="size-3.5" />
+        <span>Search symbols, pages…</span>
+        <kbd className="ml-auto rounded-[3px] border border-line-2 px-1 font-mono text-[10.5px]">⌘K</kbd>
+      </button>
+      <div className="ml-auto flex min-w-0 items-center gap-3 max-sm:gap-1.5">
+        <button type="button" onClick={onSearch} aria-label="Search" className="abtn !size-8 !p-0 md:hidden">
+          <Search className="size-3.5" />
+        </button>
+        <div className="hidden h-8 items-center rounded-[6px] border border-line bg-card xl:flex">
+          <Link href="/token" className="flex h-full items-center gap-1.5 pr-1 pl-2.5">
+            <span className="label !text-ink">{BRAND.symbol}</span>
+            <span className="num text-[11.5px] text-ink-3">{TOKEN.isLive ? "live" : "at launch"}</span>
+          </Link>
+          <a href={buy} {...(buy.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})} className="flex h-full items-center gap-0.5 border-l border-line px-2.5 text-[12px] text-ink">
+            Buy <Arrow />
+          </a>
+        </div>
+        <a
+          href={buy}
+          {...(buy.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}
+          className="abtn abtn-face !h-[30px] !px-2.5 xl:hidden max-[359px]:hidden"
+        >
+          Buy <Arrow />
+        </a>
+        <div className="flex items-center gap-0.5 max-sm:hidden">
+          <a href={BRAND.x} target="_blank" rel="noreferrer" aria-label={`${BRAND.name} on X`} className="grid size-7 place-items-center rounded-[5px] text-ink-3 hover:text-ink">
+            <XGlyph />
+          </a>
+        </div>
+        <NavWallet compact />
+        <Link href="/docs" className="abtn abtn-face max-md:hidden">
+          <BookOpen className="size-3.5" /> Docs
+        </Link>
+      </div>
     </header>
   );
 }
 
-/* ------------------------------------------------------------------ rail */
+/* ------------------------------------------------------------------ ticker */
 
-function RailCard({ title, children, testid }: { title: string; children: React.ReactNode; testid?: string }) {
-  return (
-    <section className="rounded-[10px] border border-line bg-card p-4" data-testid={testid}>
-      <h2 className="kicker">{title}</h2>
-      <div className="mt-3">{children}</div>
-    </section>
+function Ticker() {
+  const { rows, tao } = useLive();
+  if (!rows.length) return <div className="h-8 shrink-0 border-b border-line bg-black" />;
+  const one = (
+    <>
+      <Link href="/network" className="flex h-[31px] shrink-0 items-center gap-2 bg-white/[0.04] px-4">
+        <span className="grid size-4 place-items-center rounded-[5px] bg-gradient-to-b from-white to-[#cfcfcf] text-[11px] font-semibold text-black">τ</span>
+        <span className="num text-[12px] font-medium text-ink">TAO</span>
+        <span className="num text-[12px] text-ink/80">{tao ? price(tao.last) : "–"}</span>
+        <Delta v={tao?.change24h ?? null} fraction={false} className="text-[11.5px]" />
+      </Link>
+      {rows.map((r) => (
+        <Link key={r.symbol} href={`/markets/${r.symbol.toLowerCase()}`} className="flex h-[31px] shrink-0 items-center gap-2 px-4 hover:bg-white/[0.03]">
+          <span className="num text-[12px] font-medium text-ink">{r.symbol}</span>
+          <span className="num text-[12px] text-ink/75">{price(r.price)}</span>
+          <Delta v={r.change24h} className="text-[11.5px]" />
+        </Link>
+      ))}
+    </>
   );
-}
-
-function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-1 text-[13px]">
-      <span className="text-ink-3">{k}</span>
-      <span className="num min-w-0 truncate text-right text-ink">{v}</span>
+    <div className="h-8 shrink-0 overflow-hidden border-b border-line bg-black" aria-label="Chainlink prices of stock tokens">
+      <div className="marquee flex w-max items-center" style={{ animationDuration: "90s" }}>
+        {one}
+        <div className="flex items-center" aria-hidden="true">
+          {one}
+        </div>
+      </div>
     </div>
   );
 }
 
-function useTao() {
-  const [tao, setTao] = useState<{ last: number; change24h: number | null } | null>(null);
-  useEffect(() => {
-    fetch("/api/tao")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((b) => b?.last && setTao(b))
-      .catch(() => {});
-  }, []);
-  return tao;
+/* ------------------------------------------------------------------ status bar */
+
+function StatusBar() {
+  const { facts, failed } = useChain();
+  const { latency, updated, rows } = useLive();
+  const cell = "flex h-full shrink-0 items-center gap-1.5 border-r border-line px-3 text-[11.5px] text-ink-3";
+  const v = "num text-ink/80";
+  return (
+    <footer className="hidden h-7 shrink-0 items-center overflow-hidden border-t border-line bg-black lg:flex" aria-label="Status">
+      <div className={cell}>
+        <span className={`size-1.5 rounded-full ${failed ? "bg-faint" : "bg-ink"}`} />
+        <span className="text-ink/85">{failed ? "Unreachable" : facts ? "Connected" : "Connecting"}</span>
+      </div>
+      <div className={cell}>
+        <span className="size-1.5 rounded-full bg-ink" /> {CHAIN.name}
+        <span className={v}># {facts?.block ? facts.block.toLocaleString("en-US") : "–"}</span>
+        <span className="num text-faint max-xl:hidden">· {facts?.gasGwei != null ? facts.gasGwei.toFixed(3) : "–"} gwei</span>
+      </div>
+      <div className={cell}>
+        Source · <span className="text-ink/80">Chainlink</span>
+      </div>
+      <div className={`${cell} max-xl:hidden`}>
+        Latency <span className={v}>{latency != null ? `${latency}ms` : "–"}</span>
+      </div>
+      <div className={`${cell} max-xl:hidden`}>
+        Updated <span className={v}>{updated ? new Date(updated).toISOString().slice(11, 19) + "Z" : "–"}</span>
+      </div>
+      <div className={cell}>
+        Instruments <span className={v}>{rows.length || STOCKS.length}</span>
+      </div>
+      <div className="ml-auto flex h-full items-center">
+        <div className={`${cell} border-l`}>
+          <span className={`size-1.5 rounded-full ${oracleLive() ? "bg-ink" : "bg-faint"}`} /> Oracle · <span className="text-ink/80">{oracleLive() ? "on chain" : "practice"}</span>
+        </div>
+        <div className={`${cell} max-xl:hidden`}>
+          <span className="size-1.5 rounded-full bg-faint" /> Subnet · <span className="text-ink/80">target</span>
+        </div>
+        <div className={`${cell} border-r-0 max-xl:hidden`}>v0.1 preview</div>
+      </div>
+    </footer>
+  );
 }
 
-/** Right-hand rail on wide screens, a block under the page on smaller ones: chain status, the token, TAO. */
-export function AppRail() {
-  const { facts, failed } = useChain();
-  const tao = useTao();
+/* ------------------------------------------------------------------ phone tab bar */
+
+function TabBar() {
+  const active = useActive();
+  const pathname = usePathname();
+  // "More" remembers the page it was opened on, so navigating closes it without an effect.
+  const [moreAt, setMoreAt] = useState<string | null>(null);
+  const more = moreAt === pathname;
+  const setMore = (f: (v: boolean) => boolean) => setMoreAt(f(more) ? pathname : null);
+  const tabs = [
+    { href: "/ask", label: "Ask", I: MessageSquareText },
+    { href: "/markets", label: "Markets", I: LineChart },
+    { href: "/tokens", label: "Stock tokens", I: Coins },
+    { href: "/portfolio", label: "Portfolio", I: Wallet },
+  ];
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1" data-testid="app-rail">
-      <RailCard title={`${CHAIN.name} · ${CHAIN.id}`} testid="rail-chain">
-        <Row k="Status" v={facts?.block ? <span className="text-up">● connected</span> : failed ? <span className="text-down">● unreachable</span> : "reading…"} />
-        <Row k="Block" v={facts?.block ? `#${facts.block.toLocaleString("en-US")}` : "–"} />
-        <Row k="Gas" v={facts?.gasGwei != null ? `${facts.gasGwei.toFixed(3)} gwei` : "–"} />
-        <Row k="ETH" v={facts?.ethUsd != null ? `$${facts.ethUsd.toLocaleString("en-US", { maximumFractionDigits: 2 })}` : "–"} />
-      </RailCard>
-      <RailCard title={BRAND.symbol} testid="rail-token">
-        {TOKEN.isLive ? (
-          <Row k="CA" v={shortAddress(BRAND.ca, 6, 4)} />
-        ) : (
-          <p className="text-[13px] text-ink-3">The contract address is published here at launch. Trust no other source.</p>
-        )}
-        <div className="mt-3 flex gap-2">
-          <Link href="/token" className="btn btn-ghost btn-sm flex-1">
-            Token
+    <>
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid h-[58px] grid-cols-5 border-t border-line bg-black pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="App tabs">
+        {tabs.map(({ href, label, I }) => (
+          <Link key={href} href={href} aria-current={active(href) ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-[11px] ${active(href) ? "text-ink" : "text-faint"}`}>
+            <I className="size-[17px]" strokeWidth={1.6} />
+            <span className="truncate">{label}</span>
           </Link>
-          <Link href="/swap" className={`btn btn-accent btn-sm flex-1 ${TOKEN.isLive ? "" : "pointer-events-none opacity-50"}`} aria-disabled={!TOKEN.isLive}>
-            Buy
+        ))}
+        <button type="button" onClick={() => setMore((v) => !v)} aria-expanded={more} className={`flex cursor-pointer flex-col items-center justify-center gap-1 text-[11px] ${more ? "text-ink" : "text-faint"}`}>
+          <MoreHorizontal className="size-[17px]" strokeWidth={1.6} />
+          More
+        </button>
+      </nav>
+      {more ? (
+        <div className="fixed inset-x-0 top-0 bottom-[58px] z-[39] overflow-y-auto bg-black/95 px-4 pt-16 pb-6 lg:hidden" role="dialog" aria-label="All pages">
+          {APP_NAV.map((g) => (
+            <div key={g.label} className="mb-5">
+              <p className="label pb-2">{g.label}</p>
+              <ul className="grid grid-cols-2 gap-1">
+                {g.items.map((it) => {
+                  const I = ICON[it.href] ?? Activity;
+                  return (
+                    <li key={it.href}>
+                      <Link href={it.href} className={`flex h-10 items-center gap-2.5 rounded-[6px] border border-line px-3 text-[13.5px] ${active(it.href) ? "bg-paper-3 text-ink" : "text-ink-2"}`}>
+                        <I className="size-4 shrink-0" strokeWidth={1.6} />
+                        <span className="truncate">{it.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+          <TokenCard />
+          <Link href="/docs" className="abtn abtn-face mt-4 w-full">
+            <BookOpen className="size-3.5" /> Docs
           </Link>
         </div>
-      </RailCard>
-      <RailCard title="Bittensor (off-chain market)">
-        <Row k="TAO / USD" v={tao ? `$${tao.last.toFixed(2)}` : "–"} />
-        <Row k="24h" v={tao?.change24h != null ? `${tao.change24h >= 0 ? "+" : ""}${tao.change24h.toFixed(2)}%` : "–"} />
-        <p className="mt-2 text-[12px] leading-snug text-ink-3">OKX spot. TAO is not on {CHAIN.name}; subnet scoring is an integration target.</p>
-      </RailCard>
-    </div>
+      ) : null}
+    </>
   );
 }
 
-export function AppTicker() {
-  return <Ticker />;
+/* ------------------------------------------------------------------ frame */
+
+/** Desktop: sidebar, top bar, ticker, a scrolling main and a status bar, all inside the viewport. Phones: top bar, ticker, page, tab bar. */
+export function AppFrame({ children }: { children: React.ReactNode }) {
+  const [palette, setPalette] = usePalette();
+  return (
+    <AppLiveProvider>
+      <div className="flex min-h-dvh flex-col bg-black lg:h-dvh lg:min-h-0">
+        <div className="flex min-h-0 flex-1">
+          <Sidebar />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar onSearch={() => setPalette(true)} />
+            <Ticker />
+            <main
+              id="main"
+              className="min-h-0 flex-1 bg-[radial-gradient(1100px_380px_at_50%_-160px,rgba(255,255,255,0.075),transparent_70%)] pb-[76px] lg:overflow-y-auto lg:pb-0"
+              data-scroll-root
+            >
+              {children}
+            </main>
+          </div>
+        </div>
+        <StatusBar />
+      </div>
+      <TabBar />
+      {palette ? <Palette onClose={() => setPalette(false)} /> : null}
+    </AppLiveProvider>
+  );
 }

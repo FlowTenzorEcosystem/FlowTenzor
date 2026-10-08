@@ -108,7 +108,7 @@ export function DeployPanel() {
           const r = results[i.key];
           const data = i.data();
           return (
-            <section key={i.key} className="rounded-[12px] border border-line bg-card p-5" data-testid={`deploy-${i.key}`}>
+            <section key={i.key} className="panel p-5" data-testid={`deploy-${i.key}`}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="text-[17px] font-semibold text-ink">{CONTRACTS[i.key].name}</p>
                 <span className="num text-[12.5px] text-ink-3">{i.gas}</span>
@@ -163,7 +163,7 @@ export function DeployPanel() {
         })}
       </div>
       {snippet ? (
-        <div className="mt-6 rounded-[12px] border border-line bg-card p-5">
+        <div className="mt-6 panel p-5">
           <p className="text-[14px] font-semibold text-ink">Paste into src/config/contracts.ts (replacing the empty lines), then push:</p>
           <pre className="num mt-2 overflow-x-auto rounded-[8px] bg-paper-2 p-3 text-[12px] text-ink" data-testid="deploy-snippet">
             {snippet}

@@ -17,7 +17,7 @@ export const metadata = pageMeta({
 
 function cellBg(v: number | null) {
   if (v == null) return "transparent";
-  return v >= 0 ? `rgba(79, 214, 154, ${Math.min(0.75, Math.abs(v) * 0.75)})` : `rgba(242, 130, 106, ${Math.min(0.75, Math.abs(v) * 0.75)})`;
+  return v >= 0 ? `rgba(255, 255, 255, ${Math.min(0.85, 0.03 + v * 0.8).toFixed(3)})` : `rgba(255, 255, 255, ${Math.min(0.06, 0.02 + Math.abs(v) * 0.05).toFixed(3)})`;
 }
 
 export default async function AnalyticsPage() {
@@ -26,7 +26,12 @@ export default async function AnalyticsPage() {
     <>
       <JsonLd data={breadcrumbLd([{ name: "Analytics", path: "/analytics" }])} />
       <AppHead
-        chips={<span className="chip chip-live">Live data</span>}
+        chips={
+          <>
+            <span className="chip chip-live">Live data</span>
+            <span className="chip chip-practice before:hidden">Model analytics · with the oracle</span>
+          </>
+        }
         title="Analytics"
         desc="Which listings rise and fall together, and how closely each tracks BTC, ETH and TAO, measured on daily closing prices; forecasts play no part in it. Underneath, the forecast record split by horizon."
         stats={[
@@ -55,7 +60,7 @@ export default async function AnalyticsPage() {
                   <tr key={a}>
                     <th className="p-1 pr-2 text-right font-normal text-ink-3">{a}</th>
                     {m.m[i].map((v, j) => (
-                      <td key={j} className="h-9 w-11 border border-line text-center text-ink" style={{ background: cellBg(v) }} title={`${a} / ${m.labels[j]}`}>
+                      <td key={j} className={`h-9 w-11 border border-line text-center ${v != null && v > 0.55 ? "text-[#0a0a0a]" : v != null && v < 0 ? "text-down" : "text-ink"}`} style={{ background: cellBg(v) }} title={`${a} / ${m.labels[j]}`}>
                         {v == null ? "–" : v.toFixed(2)}
                       </td>
                     ))}

@@ -29,7 +29,7 @@ const KIND = {
   house: <span className="chip chip-target">Baseline backtest</span>,
 };
 
-async function Table({ horizon }: { horizon: HorizonId }) {
+async function Table({ horizon, tabs }: { horizon: HorizonId; tabs?: React.ReactNode }) {
   const [board, chain] = await Promise.all([getBoard(), chainLeaderboard()]);
   const store = getStore();
   const practice = store ? practiceTallies(await allForecasts(store)) : [];
@@ -54,12 +54,17 @@ async function Table({ horizon }: { horizon: HorizonId }) {
   const bar = Math.max(...HOUSE.map((m) => (board.tallies[m.id][horizon].scored >= MIN_RANKED ? average(board.tallies[m.id][horizon]) : 0)));
   const rows = [...ranked, ...unranked];
   return (
-    <div className="sheet min-w-0 p-2 sm:p-3" data-testid="leaderboard">
+    <div className="panel min-w-0 overflow-hidden" data-testid="leaderboard">
+      <div className="flex min-h-9 flex-wrap items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+        <h2 className="label !text-ink/85">Leaderboard</h2>
+        <span className="label">average score · {HORIZONS[horizon].label}</span>
+        <div className="ml-auto">{tabs}</div>
+      </div>
       <div className="scroll-x">
-        <table className="tbl min-w-[760px]">
+        <table className="tbl min-w-[760px] !text-[12.5px]">
           <thead>
             <tr>
-              <th className="w-[56px]">Rank</th>
+              <th className="w-[44px]">#</th>
               <th>Forecaster</th>
               <th>Source</th>
               <th className="text-right">Avg score</th>
@@ -74,17 +79,24 @@ async function Table({ horizon }: { horizon: HorizonId }) {
               const rank = ranked.indexOf(e);
               const beats = e.kind !== "house" && rank >= 0 && average(e.t) > bar && bar > 0;
               return (
-                <tr key={e.key} className={e.kind === "house" ? "bg-paper-2/60" : ""}>
+                <tr key={e.key} className={e.kind === "house" ? "[&>td]:border-dashed" : ""}>
                   <td className="num text-ink-3">{rank >= 0 ? rank + 1 : "–"}</td>
                   <td>
-                    <span className="font-semibold text-ink">{e.name}</span>
-                    <span className="block text-[12.5px] text-ink-3">
+                    <span className="font-medium text-ink">{e.name}</span>
+                    <span className="block font-sans text-[11.5px] text-faint">
                       {e.note}
                       {beats ? " · beats every baseline" : ""}
                     </span>
                   </td>
                   <td>{KIND[e.kind]}</td>
-                  <td className="num text-right text-[15px] text-ink">{e.t.scored >= MIN_RANKED ? Math.round(average(e.t)).toLocaleString("en-US") : "–"}</td>
+                  <td className="text-right text-ink">
+                    <span className="inline-flex items-center gap-2.5">
+                      <span className="h-[4px] w-[60px] rounded-full bg-paper-3">
+                        <span className="block h-full rounded-full bg-ink" style={{ width: `${e.t.scored >= MIN_RANKED ? Math.min(100, average(e.t) / 100) : 0}%` }} />
+                      </span>
+                      {e.t.scored >= MIN_RANKED ? Math.round(average(e.t)).toLocaleString("en-US") : "–"}
+                    </span>
+                  </td>
                   <td className="num text-right">{e.t.scored.toLocaleString("en-US")}</td>
                   <td className="num text-right">{e.t.scored ? `${Math.round((e.t.inRange / e.t.scored) * 100)}%` : "–"}</td>
                   <td className="num text-right">{e.t.directionCalls ? `${Math.round((e.t.directionHits / e.t.directionCalls) * 100)}%` : "–"}</td>
@@ -96,12 +108,12 @@ async function Table({ horizon }: { horizon: HorizonId }) {
         </table>
       </div>
       {!oracleLive() ? (
-        <p className="small px-3 pt-3 pb-2">
+        <p className="border-t border-line px-3 py-2.5 text-[11.5px] text-faint">
           On-chain models join this table when the ForecastOracle contract is deployed. Until then the board holds the house baselines and practice
           forecasters.
         </p>
       ) : (
-        <p className="small px-3 pt-3 pb-2">
+        <p className="border-t border-line px-3 py-2.5 text-[11.5px] text-faint">
           On-chain rows are read from ForecastOracle{" "}
           <a className="link" href={`${CHAIN.explorer}/address/${CONTRACTS.oracle.address}`} target="_blank" rel="noreferrer">
             {shortAddress(CONTRACTS.oracle.address)}
@@ -133,44 +145,46 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
       <AppHead
         chips={
           <>
-            <span className="chip chip-live">Order set by scores against Chainlink</span>
+            <span className="chip chip-live">Live</span>
+            <span className="kicker">Ordered by scores against Chainlink</span>
           </>
         }
         title="Leaderboard"
         desc={`Every forecaster ranked by average score at one horizon: on-chain models, practice wallets and the four house baselines. A rank needs at least ${MIN_RANKED} scored forecasts. Click a horizon to switch.`}
+        actions={
+          <Link href="/arena" className="abtn abtn-face">
+            ◎ Compete
+          </Link>
+        }
         stats={stats}
       />
       <section>
-        <div className="mt-6">
-          <nav aria-label="Horizon" className="flex w-max max-w-full gap-1 rounded-[10px] border border-line-2 bg-card p-1">
-            {HORIZONS.map((x) => (
-              <Link
-                key={x.key}
-                href={`/leaderboard?h=${x.key}`}
-                scroll={false}
-                aria-current={x.id === horizon ? "page" : undefined}
-                className={`rounded-[7px] px-4 py-2 text-[14px] font-semibold ${x.id === horizon ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-2"}`}
-              >
-                {x.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="mt-6">
-            <Suspense key={horizon} fallback={<BoardSkeleton rows={8} />}>
-              <Table horizon={horizon} />
-            </Suspense>
-          </div>
-          <div className="mt-8 grid grid-cols-1 gap-6 text-[15px] leading-relaxed text-ink-2 md:grid-cols-3">
+        <div className="mt-4">
+          <Suspense key={horizon} fallback={<BoardSkeleton rows={8} />}>
+            <Table
+              horizon={horizon}
+              tabs={
+                <nav aria-label="Horizon" className="seg">
+                  {HORIZONS.map((x) => (
+                    <Link key={x.key} href={`/leaderboard?h=${x.key}`} scroll={false} aria-current={x.id === horizon ? "page" : undefined}>
+                      {x.key}
+                    </Link>
+                  ))}
+                </nav>
+              }
+            />
+          </Suspense>
+          <div className="mt-4 grid grid-cols-1 gap-6 text-[12.5px] leading-relaxed text-ink-3 md:grid-cols-3">
             <p>
-              <span className="font-semibold text-ink">Average score</span> is the mean of the 0 to 10,000 scores of a forecaster&apos;s scored
+              <span className="font-medium text-ink">Average score</span> is the mean of the 0 to 10,000 scores of a forecaster&apos;s scored
               forecasts at this horizon. <Link href="/docs/how-it-works" className="link">How a score is made</Link>.
             </p>
             <p>
-              <span className="font-semibold text-ink">Baseline backtest</span> rows are recomputed over up to the last 12 days of Chainlink rounds
+              <span className="font-medium text-ink">Baseline backtest</span> rows are recomputed over up to the last 12 days of Chainlink rounds
               with data that existed at each moment. They show what plain statistics achieve, nothing more.
             </p>
             <p>
-              <span className="font-semibold text-ink">Void</span> forecasts had no new Chainlink round in their window (closed market or a quiet
+              <span className="font-medium text-ink">Void</span> forecasts had no new Chainlink round in their window (closed market or a quiet
               feed) and are not scored, so nobody gains from forecasting a weekend.
             </p>
           </div>

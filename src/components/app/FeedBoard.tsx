@@ -49,43 +49,68 @@ export function FeedBoard({ rows, initialHorizon = 0, compact = false, limit }: 
     return limit ? list.slice(0, limit) : list;
   }, [rows, q, sort, h, limit]);
   return (
-    <section className="min-w-0 rounded-[10px] border border-line bg-card" data-testid="feed-board">
-      <div className="flex flex-wrap items-center gap-3 border-b border-line p-3">
-        <div className="flex rounded-[8px] border border-line-2 p-0.5" role="tablist" aria-label="Horizon">
+    <section className="min-w-0 panel overflow-hidden" data-testid="feed-board">
+      <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+        <h2 className="label !text-ink/85">Forecast feed</h2>
+        <span className="label max-sm:hidden">{HORIZONS[h].key} horizon</span>
+        <span className="label ml-auto max-sm:hidden">{shown.length} tokens · Chainlink</span>
+        <div className="seg max-sm:ml-auto" role="tablist" aria-label="Horizon">
           {HORIZONS.map((x) => (
-            <button
-              key={x.key}
-              type="button"
-              role="tab"
-              aria-selected={h === x.id}
-              onClick={() => setH(x.id as HorizonId)}
-              className={`num cursor-pointer rounded-[6px] px-3 py-1 text-[12.5px] ${h === x.id ? "bg-ink text-[#050607]" : "text-ink-3 hover:text-ink"}`}
-            >
+            <button key={x.key} type="button" role="tab" aria-selected={h === x.id} onClick={() => setH(x.id as HorizonId)}>
               {x.key}
             </button>
           ))}
         </div>
-        {!compact ? (
-          <>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter tokens" aria-label="Filter tokens" className="field !min-h-[34px] max-w-[220px] !py-1 text-[13.5px]" data-testid="feed-filter" />
-            <div className="flex gap-1 text-[12.5px]" role="group" aria-label="Sort">
-              {(
-                [
-                  ["forecasters", "Most forecasters"],
-                  ["widest", "Widest range"],
-                  ["az", "A–Z"],
-                ] as [Sort, string][]
-              ).map(([k, label]) => (
-                <button key={k} type="button" aria-pressed={sort === k} onClick={() => setSort(k)} className={`cursor-pointer rounded-[6px] px-2.5 py-1 ${sort === k ? "bg-paper-3 text-ink" : "text-ink-3 hover:text-ink"}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : null}
-        <span className="kicker ml-auto">{shown.length} tokens · Chainlink</span>
       </div>
-      <div className="scroll-x">
+      {!compact ? (
+        <div className="flex flex-wrap items-center gap-3 border-b border-line p-3">
+          <label className="relative w-[260px] max-w-full">
+            <span className="sr-only">Filter tokens</span>
+            <svg className="absolute top-1/2 left-2.5 -translate-y-1/2 text-faint" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter tokens" aria-label="Filter tokens" className="field !pl-8" data-testid="feed-filter" />
+          </label>
+          <div className="seg" role="group" aria-label="Sort">
+            {(
+              [
+                ["forecasters", "Most forecasters"],
+                ["widest", "Widest range"],
+                ["az", "A–Z"],
+              ] as [Sort, string][]
+            ).map(([k, label]) => (
+              <button key={k} type="button" aria-pressed={sort === k} onClick={() => setSort(k)} className="min-w-[96px] text-left">
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <ul className="divide-y divide-line sm:hidden" data-testid="feed-cards">
+        {shown.map((r) => {
+          const c = r.cells[h];
+          const [label] = SIGNAL[c?.signal ?? "thin"];
+          return (
+            <li key={r.symbol}>
+              <Link href={`/markets/${r.symbol.toLowerCase()}`} className="block px-3 py-3">
+                <p className="flex items-baseline justify-between gap-2">
+                  <span className="num text-[13px] font-medium text-ink">{r.symbol}</span>
+                  <span className="num text-[13px] text-ink">{r.price != null ? money(r.price) : "–"}</span>
+                </p>
+                <p className="num mt-1 text-[11.5px] text-ink-3">
+                  Baseline {c ? `${money(c.low)} – ${money(c.high)}` : "–"} {c ? <span className="text-faint">±{(c.width * 100).toFixed(2)}%</span> : null}
+                </p>
+                <p className="mt-1 flex justify-between text-[11.5px] text-faint">
+                  <span>{c && c.practice ? `${c.practice} live forecasts` : "No practice forecasts yet"}</span>
+                  <span className="label">{label}</span>
+                </p>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="scroll-x max-sm:hidden">
         <table className="tbl min-w-[780px] text-[13px]">
           <thead>
             <tr>
@@ -106,10 +131,9 @@ export function FeedBoard({ rows, initialHorizon = 0, compact = false, limit }: 
               return (
                 <tr key={r.symbol}>
                   <td>
-                    <Link href={`/markets/${r.symbol.toLowerCase()}`} className="font-semibold text-ink hover:text-stamp">
+                    <Link href={`/markets/${r.symbol.toLowerCase()}`} title={r.name} className="font-medium text-ink hover:underline">
                       {r.symbol}
                     </Link>
-                    <span className="block max-w-[150px] truncate text-[12px] text-ink-3">{r.name}</span>
                   </td>
                   <td className="num text-right text-ink">{r.price != null ? money(r.price) : "–"}</td>
                   <td className={`num text-right ${r.change24h == null ? "text-ink-3" : r.change24h >= 0 ? "text-up" : "text-down"}`}>
@@ -121,26 +145,26 @@ export function FeedBoard({ rows, initialHorizon = 0, compact = false, limit }: 
                   <td className="num whitespace-nowrap">
                     {c ? (
                       <>
-                        {money(c.low)} – {money(c.high)} <span className="text-ink-3">±{(c.width * 100).toFixed(2)}%</span>
+                        {money(c.low)} – {money(c.high)} <span className="text-faint">±{(c.width * 100).toFixed(2)}%</span>
                       </>
                     ) : (
                       "–"
                     )}
                   </td>
-                  <td className="whitespace-nowrap text-ink-2">
+                  <td className="font-sans whitespace-nowrap text-ink-2">
                     {c && c.practice ? (
                       <span className="num">
                         {c.practice} live · <span className="text-up">{c.up}↑</span> <span className="text-down">{c.down}↓</span>
                       </span>
                     ) : (
-                      <span className="text-ink-3">None yet</span>
+                      <span className="text-faint">None yet</span>
                     )}
                   </td>
                   <td>
                     <span className={`chip ${cls}`}>{label}</span>
                   </td>
                   <td className="text-right">
-                    <Link href={`/arena?symbol=${r.symbol}&h=${HORIZONS[h].key}`} className="text-[12.5px] whitespace-nowrap text-stamp hover:underline">
+                    <Link href={`/arena?symbol=${r.symbol}&h=${HORIZONS[h].key}`} className="font-sans text-[12.5px] whitespace-nowrap text-ink-3 hover:text-ink">
                       Forecast →
                     </Link>
                   </td>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
+import { Geist_Mono, Inter, Newsreader } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/config/brand";
 import { JsonLd } from "@/components/JsonLd";
@@ -8,10 +8,10 @@ import { WalletModalProvider } from "@/components/wallet/WalletButton";
 import { WalletProvider } from "@/components/wallet/WalletProvider";
 import { HOME_DESCRIPTION, HOME_TITLE, siteLd } from "@/lib/seo";
 
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-inter", display: "swap" });
-// Text serif for display headings.
-const serif = Source_Serif_4({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-serif4", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-jet", display: "swap" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+// Display serif for headings, a geometric mono for labels and numbers.
+const serif = Newsreader({ subsets: ["latin"], variable: "--font-news", display: "swap" });
+const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(BRAND.url),
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", site: BRAND.xHandle, creator: BRAND.xHandle, title: HOME_TITLE, description: HOME_DESCRIPTION },
 };
 
-export const viewport: Viewport = { themeColor: "#050607" };
+export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <JsonLd data={siteLd} />
       </head>
       <body className="min-h-dvh overflow-x-hidden">
-        <a href="#main" className="fixed -top-20 left-5 z-[100] rounded-full bg-accent px-5 py-3 text-ink focus:top-2.5">
+        <a href="#main" className="fixed -top-20 left-5 z-[100] rounded-full bg-accent px-5 py-3 text-black focus:top-2.5">
           Skip to content
         </a>
         <WalletProvider>

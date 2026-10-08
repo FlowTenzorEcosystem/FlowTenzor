@@ -18,12 +18,12 @@ export function Mark({ size = 28, className = "", accent = "#f2b33d" }: { size?:
   );
 }
 
-/** Mark plus name in the display face. Inherits the text colour. */
-export function Wordmark({ className = "", size = 22 }: { className?: string; size?: number }) {
+/** Mark plus name: Inter medium with tight tracking. Inherits the text colour. */
+export function Wordmark({ className = "", size = 15 }: { className?: string; size?: number }) {
   return (
-    <span className={`inline-flex items-center gap-[0.35em] ${className}`} style={{ fontSize: size }}>
-      <Mark size={Math.round(size * 1.35)} />
-      <span className="font-display leading-none font-bold tracking-[-0.03em]">{BRAND.name}</span>
+    <span className={`inline-flex items-center gap-[0.5em] ${className}`} style={{ fontSize: size }}>
+      <Mark size={Math.round(size * 1.2)} />
+      <span className="leading-[1.45] font-medium tracking-[-0.03em]">{BRAND.name}</span>
     </span>
   );
 }

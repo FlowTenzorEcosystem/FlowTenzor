@@ -77,7 +77,7 @@ export function simulate(lines: Line[], s: Settings) {
 function Curve({ points }: { points: { t: number; v: number }[] }) {
   if (points.length < 2) return <div className="grid h-[140px] place-items-center text-[14px] text-ink-3">Not enough trades to draw a curve.</div>;
   const W = 600;
-  const H = 140;
+  const H = 200;
   const vs = points.map((p) => p.v);
   const lo = Math.min(0, ...vs);
   const hi = Math.max(0, ...vs);
@@ -87,7 +87,8 @@ function Curve({ points }: { points: { t: number; v: number }[] }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Paper equity curve">
       <line x1="0" x2={W} y1={y(0)} y2={y(0)} stroke="var(--color-line-2)" strokeDasharray="3 4" />
-      <path d={d} fill="none" stroke={points[points.length - 1].v >= 0 ? "var(--color-up)" : "var(--color-down)"} strokeWidth="2" />
+      <path d={`${d} L${W} ${H} L0 ${H} Z`} fill="rgba(255,255,255,0.05)" />
+      <path d={d} fill="none" stroke="#f4f4f4" strokeWidth="1.6" />
     </svg>
   );
 }
@@ -121,106 +122,127 @@ export function FollowTool() {
       return { ...cur, leaders: leaders.length ? leaders : cur.leaders };
     });
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)]" data-testid="follow-tool">
-      <div className="sheet min-w-0 p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="h-sub">Your limits</h2>
-          <span className="chip chip-practice">Paper</span>
-        </div>
-        <fieldset className="mt-5">
-          <legend className="kicker">Leaders (up to 3, stake split evenly)</legend>
-          <div className="mt-2 space-y-2">
+    <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)]" data-testid="follow-tool">
+      <div className="min-w-0 space-y-3">
+        <section className="panel overflow-hidden">
+          <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+            <h2 className="label !text-ink/85">Leaders</h2>
+            <span className="label">up to 3 · stake split evenly</span>
+          </div>
+          <fieldset>
+            <legend className="sr-only">Leaders</legend>
             {HOUSE.map((m) => (
-              <label key={m.id} className="flex cursor-pointer items-start gap-3 rounded-[9px] border border-line p-3 has-[:checked]:border-ink">
-                <input type="checkbox" checked={s.leaders.includes(m.id)} onChange={() => toggle(m.id)} className="mt-1" />
+              <label key={m.id} className="flex cursor-pointer items-start gap-2.5 border-b border-line px-3 py-2.5 last:border-0 has-[:checked]:bg-white/[0.05] has-[:checked]:shadow-[inset_2px_0_0_#fff]">
+                <input type="checkbox" checked={s.leaders.includes(m.id)} onChange={() => toggle(m.id)} className="mt-0.5 accent-white" />
                 <span className="min-w-0">
-                  <span className="block font-semibold text-ink">
-                    {m.name} <span className="font-normal text-ink-3">· {m.style}</span>
+                  <span className="flex justify-between gap-2 text-[13px] text-ink">
+                    {m.name} <span className="text-[11.5px] text-faint">{m.style}</span>
                   </span>
-                  <span className="block text-[13px] text-ink-3">{m.about}</span>
+                  <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-3">{m.about}</span>
                 </span>
               </label>
             ))}
+          </fieldset>
+          <p className="border-t border-line px-3 py-2.5 text-[11.5px] text-faint">On-chain models become followable leaders once the oracle is live and they have a scored record.</p>
+        </section>
+        <section className="panel overflow-hidden">
+          <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+            <h2 className="label !text-ink/85">Guardrails</h2>
+            <span className="label">checked before each trade</span>
           </div>
-          <p className="small mt-2">On-chain models become followable leaders once the oracle is live and they have a scored record.</p>
-        </fieldset>
-        <div className="mt-5">
-          <span className="kicker">Horizon</span>
-          <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-[9px] border border-line-2 p-1">
-            {HORIZONS.map((h) => (
-              <button
-                key={h.key}
-                type="button"
-                aria-pressed={s.horizon === h.id}
-                onClick={() => setS({ ...s, horizon: h.id as HorizonId })}
-                className={`cursor-pointer rounded-[6px] py-2 text-[14px] font-semibold ${s.horizon === h.id ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-2"}`}
-              >
-                {h.label}
-              </button>
-            ))}
+          <div className="p-3">
+            <span className="label">Horizon</span>
+            <div className="seg mt-1.5 !grid w-full grid-cols-3">
+              {HORIZONS.map((h) => (
+                <button key={h.key} type="button" aria-pressed={s.horizon === h.id} onClick={() => setS({ ...s, horizon: h.id as HorizonId })} className="text-center">
+                  {h.key}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <label className="block min-w-0">
+                <span className="label">Stake per trade</span>
+                <span className="relative mt-1.5 block">
+                  <span className="num absolute top-1/2 left-2.5 -translate-y-1/2 text-[12px] text-faint">$</span>
+                  <input className="field num !pl-6" inputMode="decimal" value={s.stake} onChange={num("stake")} />
+                </span>
+              </label>
+              <label className="block min-w-0">
+                <span className="label">Max loss per trade</span>
+                <span className="relative mt-1.5 block">
+                  <input className="field num !pr-6" inputMode="decimal" value={s.maxLossPct} onChange={num("maxLossPct")} />
+                  <span className="num absolute top-1/2 right-2.5 -translate-y-1/2 text-[12px] text-faint">%</span>
+                </span>
+              </label>
+              <label className="block min-w-0">
+                <span className="label">Daily loss cap</span>
+                <span className="relative mt-1.5 block">
+                  <span className="num absolute top-1/2 left-2.5 -translate-y-1/2 text-[12px] text-faint">$</span>
+                  <input className="field num !pl-6" inputMode="decimal" value={s.dailyCap} onChange={num("dailyCap")} />
+                </span>
+              </label>
+              <label className="block min-w-0">
+                <span className="label">Unfollow below score</span>
+                <input className="field num mt-1.5" inputMode="numeric" value={s.unfollowBelow} onChange={num("unfollowBelow")} />
+              </label>
+            </div>
+            <p className="mt-3 text-[11.5px] leading-relaxed text-faint">Auto-unfollow reads the leader&apos;s last ten scored forecasts. Settings stay in this browser only.</p>
           </div>
-        </div>
-        <div className="mt-5 grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
-          <label className="block min-w-0">
-            <span className="kicker">Stake per trade (USDG)</span>
-            <input className="field num mt-1.5" inputMode="decimal" value={s.stake} onChange={num("stake")} />
-          </label>
-          <label className="block min-w-0">
-            <span className="kicker">Loss limit per trade (%)</span>
-            <input className="field num mt-1.5" inputMode="decimal" value={s.maxLossPct} onChange={num("maxLossPct")} />
-          </label>
-          <label className="block min-w-0">
-            <span className="kicker">Daily loss cap (USDG)</span>
-            <input className="field num mt-1.5" inputMode="decimal" value={s.dailyCap} onChange={num("dailyCap")} />
-          </label>
-          <label className="block min-w-0">
-            <span className="kicker">Unfollow below score</span>
-            <input className="field num mt-1.5" inputMode="numeric" value={s.unfollowBelow} onChange={num("unfollowBelow")} />
-          </label>
-        </div>
-        <p className="small mt-4">Auto-unfollow uses the leader&apos;s last ten scored forecasts. Settings stay in this browser only.</p>
+        </section>
+        <p className="flex items-center gap-2 rounded-[8px] border border-dashed border-line-2 px-3 py-2.5 text-[12px] text-ink-3">
+          <span className="chip chip-practice before:hidden">Paper</span> Mirroring into a wallet waits for the follow vault.
+        </p>
       </div>
 
-      <div className="min-w-0 space-y-6">
-        <div className="sheet min-w-0 p-5 sm:p-6">
-          {failed ? (
-            <p className="small">The leader&apos;s record could not be loaded. Try again shortly.</p>
-          ) : !result ? (
-            <p className="small">Replaying the leader&apos;s record…</p>
-          ) : (
-            <>
-              <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {[
-                  ["Paper P&L", usd(result.total), result.total >= 0 ? "text-up" : "text-down"],
-                  ["Trades", String(result.trades.length), "text-ink"],
-                  ["Win rate", result.trades.length ? `${Math.round((result.wins / result.trades.length) * 100)}%` : "–", "text-ink"],
-                  ["Max drawdown", result.drawdown ? `$${result.drawdown.toFixed(2)}` : "–", "text-ink"],
-                ].map(([k, v, c]) => (
-                  <div key={k} className="min-w-0">
-                    <dt className="kicker">{k}</dt>
-                    <dd className={`num mt-1 text-[22px] ${c}`} data-testid={k === "Trades" ? "follow-trades" : undefined}>
-                      {v}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="mt-5">
-                <Curve points={result.curve} />
+      <div className="min-w-0 space-y-3">
+        {failed ? (
+          <p className="panel p-4 text-[13px] text-ink-3">The leader&apos;s record could not be loaded. Try again shortly.</p>
+        ) : !result ? (
+          <p className="panel p-4 text-[13px] text-ink-3">Replaying the leader&apos;s record…</p>
+        ) : (
+          <>
+            <dl className="grid grid-cols-2 overflow-hidden rounded-[8px] border border-white/[0.08] bg-card sm:grid-cols-5">
+              {[
+                ["Paper P&L", usd(result.total), result.total >= 0 ? "text-up" : "text-down"],
+                ["Trades", String(result.trades.length), "text-ink"],
+                ["Win rate", result.trades.length ? `${Math.round((result.wins / result.trades.length) * 100)}%` : "–", "text-ink"],
+                ["Max drawdown", result.drawdown ? `$${result.drawdown.toFixed(2)}` : "–", "text-ink"],
+                ["Leaders", String(s.leaders.length), "text-ink"],
+              ].map(([k, v, c], i) => (
+                <div key={k} className={`min-w-0 px-3 py-2.5 ${i ? "border-l border-line" : ""} ${i >= 2 ? "max-sm:border-t" : ""}`}>
+                  <dt className="label">{k}</dt>
+                  <dd className={`num mt-1.5 text-[16px] ${c}`} data-testid={k === "Trades" ? "follow-trades" : undefined}>
+                    {v}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <section className="panel overflow-hidden">
+              <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+                <h2 className="label !text-ink/85">Equity</h2>
+                <span className="label">paper · ${s.stake} per trade</span>
               </div>
-              <p className="small mt-3">
-                {result.flat} flat calls skipped · {result.capped} trades skipped by the daily cap
-                {result.stopped.length
-                  ? ` · auto-unfollowed ${result.stopped.map((id) => HOUSE.find((m) => m.id === id)?.name).join(", ")} on ${new Date((result.unfollowedAt ?? 0) * 1000).toISOString().slice(0, 10)}`
-                  : ""}
-                . Up to 12 days of baseline forecasts, replayed against Chainlink outcomes; fees, slippage and funding are left out.
-              </p>
-            </>
-          )}
-        </div>
+              <div className="p-3">
+                <Curve points={result.curve} />
+                <p className="mt-2 text-[11.5px] text-faint">
+                  {result.flat} flat calls skipped · {result.capped} skipped by the daily cap
+                  {result.stopped.length
+                    ? ` · auto-unfollowed ${result.stopped.map((id) => HOUSE.find((m) => m.id === id)?.name).join(", ")} on ${new Date((result.unfollowedAt ?? 0) * 1000).toISOString().slice(0, 10)}`
+                    : ""}
+                  . Up to 12 days of baseline forecasts replayed against Chainlink outcomes; fees, slippage and funding are left out.
+                </p>
+              </div>
+            </section>
+          </>
+        )}
         {result && result.trades.length ? (
-          <div className="sheet min-w-0 p-2 sm:p-3">
+          <section className="panel overflow-hidden">
+            <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+              <h2 className="label !text-ink/85">Paper trades</h2>
+              <span className="label">{result.trades.length}</span>
+            </div>
             <div className="scroll-x">
-              <table className="tbl min-w-[620px]">
+              <table className="tbl min-w-[600px] !text-[12.5px]">
                 <thead>
                   <tr>
                     <th>Resolved (UTC)</th>
@@ -236,20 +258,21 @@ export function FollowTool() {
                     .reverse()
                     .map((t) => (
                       <tr key={`${t.leader}-${t.symbol}-${t.madeAt}`}>
-                        <td className="num text-[13px]">{new Date(t.resolvesAt * 1000).toISOString().slice(5, 16).replace("T", " ")}</td>
-                        <td className="font-semibold">{t.symbol}</td>
-                        <td className={t.side > 0 ? "text-up" : "text-down"}>{t.side > 0 ? "Long" : "Short"}</td>
-                        <td className="num text-right text-[13px]">
+                        <td>{new Date(t.resolvesAt * 1000).toISOString().slice(5, 16).replace("T", " ")}</td>
+                        <td className="font-medium text-ink">{t.symbol}</td>
+                        <td className={t.side > 0 ? "text-up" : "text-down"}>{t.side > 0 ? "▲ Long" : "▼ Short"}</td>
+                        <td className="text-right">
                           {t.reference.toFixed(2)} → {t.price?.toFixed(2)}
                         </td>
-                        <td className={`num text-right ${t.pnl >= 0 ? "text-up" : "text-down"}`}>{usd(t.pnl)}</td>
+                        <td className={`text-right ${t.pnl >= 0 ? "text-up" : "text-down"}`}>{usd(t.pnl)}</td>
                       </tr>
                     ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </section>
         ) : null}
+        <p className="text-[11.5px] text-faint">Simulated outcomes. Costs such as fees and slippage are left out, and a token's pool price can sit above or below its feed. Yesterday's score is no promise for tomorrow; nothing here tells you to trade.</p>
       </div>
     </div>
   );

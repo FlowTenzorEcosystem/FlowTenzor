@@ -53,7 +53,7 @@ function useBoardRow(symbol: string) {
 /** Where a forecast goes: the oracle when it is deployed (default), or practice. */
 type Mode = "chain" | "practice";
 
-export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, initialHorizon = 1 }: { symbol?: string; onSaved?: () => void; initialSymbol?: string; initialHorizon?: HorizonId }) {
+export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, initialHorizon = 1, onRange, hideSymbol = false }: { symbol?: string; onSaved?: () => void; initialSymbol?: string; initialHorizon?: HorizonId; onRange?: (r: { low: number; high: number; horizon: HorizonId; price: number | null }) => void; hideSymbol?: boolean }) {
   const wallet = useWallet();
   const modal = useWalletModal();
   const [symbol, setSymbol] = useState(fixedSymbol ?? initialSymbol ?? "NVDA");
@@ -70,6 +70,9 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
   const [picked, setModelId] = useState<string | null>(null);
   const [newModel, setNewModel] = useState("");
   const row = useBoardRow(symbol);
+  useEffect(() => {
+    onRange?.({ low: Number(low) || 0, high: Number(high) || 0, horizon, price: row?.price ?? null });
+  }, [low, high, horizon, row?.price, onRange]);
 
   const fill = useCallback(() => {
     const list = row?.forecasts[String(horizon)] ?? [];
@@ -167,11 +170,13 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
   }
 
   return (
-    <div className="sheet min-w-0 p-5 sm:p-6" data-testid="forecast-desk">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="h-sub">Add a forecast</h2>
+    <div className="panel min-w-0 overflow-hidden" data-testid="forecast-desk">
+      <div className="flex min-h-9 flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+        <h2 className="label flex gap-3 !text-ink/85">
+          Your forecast <span className="!text-faint">{symbol} · {HORIZONS[horizon].short}</span>
+        </h2>
         {oracleLive() ? (
-          <div role="tablist" aria-label="Where to record" className="flex rounded-[9px] border border-line-2 p-0.5 text-[13px]">
+          <div role="tablist" aria-label="Where to record" className="seg">
             {(["chain", "practice"] as Mode[]).map((m) => (
               <button
                 key={m}
@@ -179,7 +184,7 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
                 role="tab"
                 aria-selected={mode === m}
                 onClick={() => setMode(m)}
-                className={`cursor-pointer rounded-[7px] px-3 py-1.5 font-semibold ${mode === m ? "bg-ink text-paper" : "text-ink-2"}`}
+                className="!font-sans"
               >
                 {m === "chain" ? "On chain" : "Practice"}
               </button>
@@ -190,10 +195,10 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
         )}
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {fixedSymbol ? null : (
+      <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2">
+        {fixedSymbol || hideSymbol ? null : (
           <label className="block min-w-0">
-            <span className="kicker">Token</span>
+            <span className="label">Token</span>
             <select className="field mt-1.5" value={symbol} onChange={(e) => setSymbol(e.target.value)} data-testid="desk-symbol">
               {STOCKS.map((s) => (
                 <option key={s.symbol} value={s.symbol}>
@@ -203,16 +208,16 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
             </select>
           </label>
         )}
-        <div className={`min-w-0 ${fixedSymbol ? "sm:col-span-2" : ""}`}>
-          <span className="kicker">Horizon</span>
-          <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-[9px] border border-line-2 p-1">
+        <div className={`min-w-0 ${fixedSymbol || hideSymbol ? "sm:col-span-2" : ""}`}>
+          <span className="label">Horizon</span>
+          <div className="seg mt-1.5 !grid w-full grid-cols-3">
             {HORIZONS.map((h) => (
               <button
                 key={h.key}
                 type="button"
                 onClick={() => setHorizon(h.id as HorizonId)}
                 aria-pressed={horizon === h.id}
-                className={`cursor-pointer rounded-[6px] py-2 text-[14px] font-semibold ${horizon === h.id ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-2"}`}
+                className="text-center"
               >
                 {h.label}
               </button>
@@ -220,27 +225,27 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
           </div>
         </div>
         <label className="block min-w-0">
-          <span className="kicker">Low (USD)</span>
+          <span className="label">▼ Low (USD)</span>
           <input className="field num mt-1.5" inputMode="decimal" value={low} onChange={(e) => setLow(e.target.value)} aria-label="Low price" data-testid="desk-low" />
         </label>
         <label className="block min-w-0">
-          <span className="kicker">High (USD)</span>
+          <span className="label">▲ High (USD)</span>
           <input className="field num mt-1.5" inputMode="decimal" value={high} onChange={(e) => setHigh(e.target.value)} aria-label="High price" data-testid="desk-high" />
         </label>
         <label className="block min-w-0">
-          <span className="kicker">Confidence (50 to 99 %)</span>
+          <span className="label">Chance it lands inside (50 to 99 %)</span>
           <input className="field num mt-1.5" inputMode="numeric" value={confidence} onChange={(e) => setConfidence(e.target.value)} aria-label="Confidence" />
         </label>
         <div className="flex min-w-0 flex-col justify-end">
-          <p className="small">
+          <p className="text-[12px] text-ink-3">
             Chainlink now: <span className="num text-ink">{row?.price ? `$${money(row.price)}` : "reading…"}</span>
           </p>
-          <button type="button" onClick={fill} className="link mt-1 cursor-pointer self-start text-[14px]">
+          <button type="button" onClick={fill} className="mt-1 cursor-pointer self-start text-[12px] text-ink underline decoration-line-2 underline-offset-2">
             Reset to the baselines&apos; range
           </button>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Shape the range">
+      <div className="flex flex-wrap gap-1.5 px-3" role="group" aria-label="Shape the range">
         {(
           [
             ["tighter", "Tighter"],
@@ -249,20 +254,20 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
             ["down", "Lean down ▼"],
           ] as const
         ).map(([k, l]) => (
-          <button key={k} type="button" onClick={() => shape(k)} className="cursor-pointer rounded-[7px] border border-line-2 px-2.5 py-1 text-[12.5px] text-ink-2 hover:text-ink">
+          <button key={k} type="button" onClick={() => shape(k)} className="cursor-pointer rounded-[4px] border border-line px-2 py-1 text-[11.5px] text-ink-3 hover:border-line-2 hover:text-ink">
             {l}
           </button>
         ))}
         {row?.price && Number(low) > 0 && Number(high) > Number(low) ? (
-          <span className="num ml-auto self-center text-[12.5px] text-ink-3">
+          <span className="num ml-auto self-center text-[11.5px] text-faint">
             ±{((((Number(high) - Number(low)) / 2) / row.price) * 100).toFixed(2)}% · leans {(Number(low) + Number(high)) / 2 > row.price ? "up" : (Number(low) + Number(high)) / 2 < row.price ? "down" : "flat"}
           </span>
         ) : null}
       </div>
 
       {mode === "chain" ? (
-        <div className="mt-5 rounded-[10px] border border-line bg-paper-2 p-4">
-          <p className="kicker">Model</p>
+        <div className="mx-3 mt-3 rounded-[6px] border border-line bg-card p-3">
+          <p className="label">Model</p>
           {!wallet.address ? (
             <p className="small mt-1">Connect a wallet to pick or register a model.</p>
           ) : mine.length ? (
@@ -291,14 +296,14 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
         </div>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button type="button" disabled={busy || (!!wallet.address && !!problem)} onClick={submit} className="btn btn-accent" data-testid="desk-submit">
-          {!wallet.address ? "Connect wallet to forecast" : busy ? "Working…" : mode === "chain" ? "Commit on chain" : "Sign practice forecast"}
+      <div className="flex flex-wrap items-center gap-3 px-3 pt-3">
+        <button type="button" disabled={busy || (!!wallet.address && !!problem)} onClick={submit} className="abtn abtn-face !h-9 w-full" data-testid="desk-submit">
+          {!wallet.address ? "Connect wallet & sign" : busy ? "Working…" : mode === "chain" ? "Commit on chain" : "Sign practice forecast"}
         </button>
-        {wallet.address && problem ? <span className="text-[14px] text-down">{problem}</span> : null}
+        {wallet.address && problem ? <span className="text-[12.5px] text-ink-2">{problem}</span> : null}
       </div>
       {status ? (
-        <p className="mt-3 text-[14px] text-ink-2" role="status" data-testid="desk-status">
+        <p className="mx-3 mt-3 text-[12.5px] text-ink-2" role="status" data-testid="desk-status">
           {status}{" "}
           {tx ? (
             <a href={txUrl(tx)} target="_blank" rel="noreferrer" className="link">
@@ -308,12 +313,12 @@ export function ForecastDesk({ symbol: fixedSymbol, onSaved, initialSymbol, init
         </p>
       ) : null}
       {error ? (
-        <p className="mt-3 text-[14px] text-down" role="alert" data-testid="desk-error">
+        <p className="mx-3 mt-3 text-[12.5px] text-ink" role="alert" data-testid="desk-error">
           {error}
         </p>
       ) : null}
-      <p className="small mt-4">
-        One live forecast per {mode === "chain" ? "model" : "wallet"}, token and horizon. Scored by the{" "}
+      <p className="px-3 pt-3 pb-3 text-[11.5px] leading-relaxed text-faint">
+        A practice signature costs nothing and puts nothing on chain. One live forecast per {mode === "chain" ? "model" : "wallet"}, token and horizon. Scored by the{" "}
         <Link href="/docs/how-it-works" className="link">
           published rule
         </Link>{" "}

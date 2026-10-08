@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function DeployPage() {
   return (
-    <div className="ctn py-12">
+    <div className="ctn pt-[140px] pb-12">
       <DeployPanel />
     </div>
   );

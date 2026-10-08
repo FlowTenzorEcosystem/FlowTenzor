@@ -73,7 +73,7 @@ function Plot({ s, overlay }: { s: Series; overlay?: { low: number; high: number
         : <path d={path} fill="none" stroke="var(--color-ink)" strokeWidth="1.6" strokeLinejoin="round" />}
       <line x1={pad.l} x2={W - pad.r} y1={y(last)} y2={y(last)} stroke="var(--color-accent)" strokeDasharray="3 4" />
       <rect x={W - pad.r + 2} y={y(last) - 9} width={pad.r - 4} height="18" rx="3" fill="var(--color-accent)" />
-      <text x={W - pad.r + 6} y={y(last) + 4} fontSize="11" fill="#04140e" fontFamily="var(--font-mono)">
+      <text x={W - pad.r + 6} y={y(last) + 4} fontSize="11" fill="#0a0a0a" fontFamily="var(--font-mono)">
         {fmt(last)}
       </text>
     </svg>
@@ -106,20 +106,20 @@ export function PriceChart({ symbol, overlay }: { symbol: string; overlay?: { lo
   const low = s?.bars?.length ? Math.min(...s.bars.map((b) => b.l)) : pts.length ? Math.min(...pts.map((p) => p.p)) : null;
   const chg = first && last ? (last / first - 1) * 100 : null;
   return (
-    <section className="min-w-0 rounded-[10px] border border-line bg-card" data-testid="price-chart">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
-        <p className="kicker">
-          Price · <span className="normal-case">{s?.source ?? "loading"}</span>
+    <section className="min-w-0 panel" data-testid="price-chart">
+      <div className="flex min-h-9 flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+        <p className="label flex gap-3 !text-ink/85">
+          Price <span className="!text-faint">{s?.source ?? "loading"}</span>
         </p>
-        <div className="flex gap-0.5 rounded-[7px] border border-line-2 p-0.5" role="tablist" aria-label="Range">
+        <div className="seg" role="tablist" aria-label="Range">
           {RANGES.map((r) => (
-            <button key={r} type="button" role="tab" aria-selected={range === r} onClick={() => setRange(r)} className={`num cursor-pointer rounded-[5px] px-2.5 py-1 text-[12px] ${range === r ? "bg-ink text-[#050607]" : "text-ink-3 hover:text-ink"}`}>
+            <button key={r} type="button" role="tab" aria-selected={range === r} onClick={() => setRange(r)}>
               {r}
             </button>
           ))}
         </div>
       </div>
-      <div className="flex flex-wrap gap-x-5 gap-y-1 px-4 pt-3 text-[12.5px] text-ink-3">
+      <div className="flex flex-wrap gap-x-5 gap-y-1 px-3 pt-3 text-[12px] text-ink-3">
         <span>
           {range} change <span className={`num ${chg == null ? "" : chg >= 0 ? "text-up" : "text-down"}`}>{chg == null ? "–" : `${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%`}</span>
         </span>

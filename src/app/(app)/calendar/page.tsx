@@ -15,7 +15,7 @@ export const metadata = pageMeta({
   description: `Scheduled economic releases that move stock tokens: date, New York time, your local time, consensus and previous figures, with a countdown to the next high-impact US release.`,
 });
 
-const IMPACT: Record<CalEvent["impact"], string> = { high: "chip-down", medium: "chip-practice", low: "" };
+const IMPACT: Record<CalEvent["impact"], string> = { high: "chip-live", medium: "chip-practice", low: "" };
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ impact?: string; region?: string }> }) {
   const { impact = "medium", region = "usd" } = await searchParams;
@@ -30,103 +30,168 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     <>
       <JsonLd data={breadcrumbLd([{ name: "Macro calendar", path: "/calendar" }])} />
       <AppHead
-        chips={<span className="chip chip-live">Live</span>}
+        chips={
+          <>
+            <span className="chip chip-live">Live</span>
+            <span className="chip chip-practice before:hidden">Release-window scores arrive with the oracle</span>
+          </>
+        }
         title="Macro calendar"
-        desc="Dates and times of the data releases that shake share and coin prices. Each row shows the New York time it is published at and the same moment in your own zone; past rows turn grey."
-        stats={[
-          { k: "Events listed", v: all.length },
-          { k: "Shown", v: shown.length },
-          { k: "Source", v: "Nasdaq calendar" },
-          { k: "Impact grade", v: "by event name", note: "our classification" },
-        ]}
+        desc="Upcoming data releases that tend to move shares and coins. Each row shows the New York time it is published at and the same moment in your own zone; past rows turn grey."
+        actions={
+          <>
+            <div className="seg" role="group" aria-label="Impact">
+              {[
+                ["high", "High"],
+                ["medium", "Medium+"],
+                ["all", "All"],
+              ].map(([k, l]) => (
+                <Link key={k} href={link("impact", k)} scroll={false} aria-current={impact === k ? "page" : undefined} className="min-w-[60px] text-center !font-sans">
+                  {l}
+                </Link>
+              ))}
+            </div>
+            <div className="seg" role="group" aria-label="Region">
+              {[
+                ["usd", "USD"],
+                ["all", "All"],
+              ].map(([k, l]) => (
+                <Link key={k} href={link("region", k)} scroll={false} aria-current={region === k ? "page" : undefined} className="!font-sans">
+                  {l}
+                </Link>
+              ))}
+            </div>
+          </>
+        }
       />
-      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-5 lg:order-2">
-          <Panel title="Next high-impact US release" testid="next-release">
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-3">
+          <section className="panel flex flex-wrap items-end justify-between gap-4 p-4" data-testid="next-release">
             {next ? (
               <>
-                <p className="font-display text-[22px] text-ink">{next.event}</p>
-                <p className="mt-1 text-[13px] text-ink-3">
-                  {next.date} · {next.gmt} New York · <LocalTime t={next.at ?? 0} withDay /> your time
-                </p>
-                <div className="mt-3">
-                  <Countdown to={next.at ?? 0} label="until release" />
+                <div className="min-w-0">
+                  <p className="label flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-ink" /> Next high-impact USD release
+                  </p>
+                  <p className="mt-2 text-[22px] leading-tight tracking-[-0.02em] text-ink">{next.event}</p>
+                  <p className="mt-1.5 text-[12.5px] text-ink-3">
+                    <LocalTime t={next.at ?? 0} withDay /> your time · {next.gmt} New York · {next.date}
+                  </p>
+                  <p className="mt-3 flex flex-wrap gap-1.5">
+                    <span className="chip chip-live before:hidden">High</span>
+                    <span className="chip before:hidden">USD</span>
+                    <span className="chip before:hidden">Consensus {next.consensus || "—"}</span>
+                    <span className="chip before:hidden">Previous {next.previous || "—"}</span>
+                  </p>
                 </div>
-                <p className="mt-2 text-[13px] text-ink-2">
-                  Consensus {next.consensus || "—"} · previous {next.previous || "—"}
-                </p>
+                <div className="text-right">
+                  <p className="label">Releases in</p>
+                  <div className="mt-2">
+                    <Countdown to={next.at ?? 0} big />
+                  </div>
+                  <p className="mt-2 text-[11.5px] text-faint">Model scores around this release · with the oracle</p>
+                </div>
               </>
             ) : (
               <p className="text-[14px] text-ink-3">No high-impact US release in the next ten days of data.</p>
             )}
-          </Panel>
-          <Panel title="Filters">
-            <p className="kicker">Impact</p>
-            <div className="mt-1.5 flex gap-1 text-[13px]">
-              {[
-                ["high", "High"],
-                ["medium", "Medium and up"],
-                ["all", "All"],
-              ].map(([k, l]) => (
-                <Link key={k} href={link("impact", k)} scroll={false} className={`rounded-[6px] px-2.5 py-1 ${impact === k ? "bg-paper-3 text-ink" : "text-ink-3 hover:text-ink"}`}>
-                  {l}
-                </Link>
-              ))}
-            </div>
-            <p className="kicker mt-4">Region</p>
-            <div className="mt-1.5 flex gap-1 text-[13px]">
-              {[
-                ["usd", "United States"],
-                ["all", "All"],
-              ].map(([k, l]) => (
-                <Link key={k} href={link("region", k)} scroll={false} className={`rounded-[6px] px-2.5 py-1 ${region === k ? "bg-paper-3 text-ink" : "text-ink-3 hover:text-ink"}`}>
-                  {l}
-                </Link>
-              ))}
-            </div>
-            <dl className="mt-5 space-y-1.5 text-[12.5px] text-ink-3">
-              <div>
-                <span className="chip chip-down">High</span> rates, inflation, jobs, growth, spending
+          </section>
+          <section className="panel overflow-hidden" data-testid="calendar-list">
+            <h2 className="label flex gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-3 !text-ink/85">
+              Events <span className="!text-faint">{shown.length} shown · your time / NY</span>
+            </h2>
+            {byDay.size ? (
+              <div className="scroll-x">
+                <table className="tbl min-w-[720px] !text-[12.5px] [&_td]:!py-2.5">
+                  <thead>
+                    <tr>
+                      <th>Local</th>
+                      <th>NY</th>
+                      <th>Ccy</th>
+                      <th>Impact</th>
+                      <th>Event</th>
+                      <th className="text-right">Actual</th>
+                      <th className="text-right">Consensus</th>
+                      <th className="text-right">Previous</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...byDay.entries()].flatMap(([date, list]) => [
+                      <tr key={date}>
+                        <td colSpan={8} className="!bg-white/[0.015] !py-2">
+                          <span className="label !text-ink-3">
+                            {new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" })}
+                          </span>
+                          <span className="label float-right">{list.length}</span>
+                        </td>
+                      </tr>,
+                      ...list.map((e, i) => (
+                        <tr key={`${date}-${e.event}-${i}`} className={(e.at ?? 0) < now ? "opacity-45" : ""}>
+                          <td className="whitespace-nowrap text-ink">{e.at ? <LocalTime t={e.at} /> : "—"}</td>
+                          <td className="whitespace-nowrap text-faint">{e.gmt || "—"}</td>
+                          <td className="text-ink-3">{e.usd ? "USD" : e.country.slice(0, 3).toUpperCase()}</td>
+                          <td>
+                            <span className={`chip before:hidden ${IMPACT[e.impact]}`}>{e.impact}</span>
+                          </td>
+                          <td className="font-sans text-[13px] text-ink">{e.event}</td>
+                          <td className="text-right">{e.actual || "–"}</td>
+                          <td className="text-right text-ink-2">{e.consensus || "–"}</td>
+                          <td className="text-right text-ink-3">{e.previous || "–"}</td>
+                        </tr>
+                      )),
+                    ])}
+                  </tbody>
+                </table>
               </div>
-              <div>
-                <span className="chip chip-practice">Medium</span> other US releases
-              </div>
-              <div>
-                <span className="chip">Low</span> auctions, weekly trackers, other regions
-              </div>
-            </dl>
-            <p className="mt-4 text-[12px] text-ink-3">How forecasters score around each event appears once the record covers enough releases.</p>
-          </Panel>
+            ) : (
+              <p className="p-6 text-[14px] text-ink-3">The calendar source could not be read right now.</p>
+            )}
+          </section>
         </div>
-        <Panel title="Events" note="New York · your time" pad={false} testid="calendar-list" className="lg:order-1">
-          {byDay.size ? (
-            <div className="divide-y divide-line">
-              {[...byDay.entries()].map(([date, list]) => (
-                <div key={date} className="px-4 py-3">
-                  <p className="kicker !text-ink-2">{new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" })}</p>
-                  <ul className="mt-2 space-y-1.5">
-                    {list.map((e, i) => (
-                      <li key={`${e.event}-${i}`} className={`grid grid-cols-[52px_52px_minmax(0,1fr)] items-baseline gap-2 text-[13px] sm:grid-cols-[56px_56px_minmax(0,1fr)_auto] ${(e.at ?? 0) < now ? "opacity-50" : ""}`}>
-                        <span className="num text-ink">{e.gmt || "—"}</span>
-                        <span className="text-ink-3">{e.at ? <LocalTime t={e.at} /> : "—"}</span>
-                        <span className="min-w-0">
-                          <span className={`chip mr-2 ${IMPACT[e.impact]}`}>{e.impact}</span>
-                          <span className="text-ink">{e.event}</span>
-                          {!e.usd ? <span className="ml-1 text-ink-3">· {e.country}</span> : null}
-                        </span>
-                        <span className="num col-span-3 text-ink-3 sm:col-span-1 sm:text-right">
-                          {e.actual ? `actual ${e.actual} · ` : ""}cons. {e.consensus || "—"} · prev. {e.previous || "—"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+        <div className="min-w-0 space-y-3">
+          <Panel title="This week" note="USD · high impact" pad={false}>
+            <ul>
+              {all
+                .filter((e) => e.usd && e.impact === "high" && (e.at ?? 0) > now - 86_400 && (e.at ?? 0) < now + 7 * 86_400)
+                .slice(0, 10)
+                .map((e, i) => (
+                  <li key={i} className={`grid grid-cols-[112px_minmax(0,1fr)] gap-2 border-b border-line px-3 py-2 text-[12.5px] last:border-0 ${(e.at ?? 0) < now ? "opacity-45" : ""}`}>
+                    <span className="whitespace-nowrap text-faint">{e.at ? <LocalTime t={e.at} withDay /> : "—"}</span>
+                    <span className="truncate text-ink">{e.event}</span>
+                  </li>
+                ))}
+            </ul>
+          </Panel>
+          <Panel title="Feed" pad={false}>
+            <dl className="text-[13px]">
+              {[
+                ["Source", "Nasdaq calendar"],
+                ["Events listed", String(all.length)],
+                ["Shown", String(shown.length)],
+                ["Impact grade", "by event name"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-3 border-b border-line px-3 py-2.5 last:border-0">
+                  <dt className="text-ink-3">{k}</dt>
+                  <dd className="num text-right text-ink">{v}</dd>
                 </div>
               ))}
-            </div>
-          ) : (
-            <p className="p-6 text-[14px] text-ink-3">The calendar source could not be read right now.</p>
-          )}
-        </Panel>
+            </dl>
+          </Panel>
+          <Panel title="Legend">
+            <dl className="space-y-2 text-[12.5px] text-ink-3">
+              <div>
+                <span className="chip chip-live before:hidden">High</span> rates, inflation, jobs, growth, spending
+              </div>
+              <div>
+                <span className="chip chip-practice before:hidden">Medium</span> other US releases
+              </div>
+              <div>
+                <span className="chip before:hidden">Low</span> auctions, weekly trackers, other regions
+              </div>
+            </dl>
+            <p className="mt-3 text-[11.5px] text-faint">How forecasters score around each release appears once the record covers enough of them.</p>
+          </Panel>
+        </div>
       </div>
     </>
   );

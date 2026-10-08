@@ -53,10 +53,10 @@ export function PageHead({
 }) {
   return (
     <section className="border-b border-line">
-      <div className={`ctn grid grid-cols-1 gap-10 py-14 md:py-20 ${aside ? "lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-end" : ""}`}>
+      <div className={`ctn grid grid-cols-1 gap-10 pt-[150px] pb-14 md:pb-20 max-md:pt-[120px] ${aside ? "lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-end" : ""}`}>
         <div className="min-w-0 max-w-[860px]">
           {kicker ? <div className="mb-5 flex flex-wrap items-center gap-2">{kicker}</div> : null}
-          <h1 className="h-hero !text-[clamp(38px,5.2vw,68px)]">{title}</h1>
+          <h1 className="h-hero !text-[clamp(40px,5vw,72px)]">{title}</h1>
           {lede ? <p className="lede mt-6 max-w-[680px]">{lede}</p> : null}
           {children ? <div className="mt-8 flex flex-wrap gap-3">{children}</div> : null}
         </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Bell } from "lucide-react";
 import { STOCKS } from "@/config/stocks";
 import { useLocalStore } from "@/components/wallet/useLocalStore";
 import { usePrefs } from "./AppShell";
@@ -80,108 +81,129 @@ export function AlertsView() {
   const armed = alerts.filter((a) => !a.firedAt);
   const fired = alerts.filter((a) => a.firedAt);
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]" data-testid="alerts">
-      <section className="rounded-[10px] border border-line bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="kicker !text-ink-2">New alert</h2>
-          {perm !== "granted" ? (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => "Notification" in window && Notification.requestPermission().then(setPerm)}>
-              Enable notifications
-            </button>
-          ) : (
-            <span className="chip chip-live">Notifications on</span>
-          )}
-        </div>
-        <label className="mt-4 block">
-          <span className="kicker">Asset</span>
-          <select className="field mt-1.5" value={asset} onChange={(e) => setAsset(e.target.value)} aria-label="Asset">
-            {STOCKS.map((s) => (
-              <option key={s.symbol} value={s.symbol}>
-                {s.symbol} · {s.name}
-              </option>
-            ))}
-            <option value="TAO">TAO · Bittensor (OKX)</option>
-          </select>
-        </label>
-        <div className="mt-4">
-          <span className="kicker">Condition</span>
-          <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-[8px] border border-line-2 p-1">
-            {(["above", "below"] as const).map((d) => (
-              <button key={d} type="button" aria-pressed={dir === d} onClick={() => setDir(d)} className={`cursor-pointer rounded-[6px] py-1.5 text-[13.5px] ${dir === d ? "bg-ink text-[#050607]" : "text-ink-3"}`}>
-                {d === "above" ? "Goes over" : "Goes under"}
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[380px_minmax(0,1fr)]" data-testid="alerts">
+      <div className="min-w-0 space-y-3">
+        <section className="panel overflow-hidden">
+          <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+            <h2 className="label !text-ink/85">New alert</h2>
+            {perm !== "granted" ? (
+              <button type="button" className="abtn ml-auto !h-7 !text-ink" onClick={() => "Notification" in window && Notification.requestPermission().then(setPerm)}>
+                <Bell className="size-3.5" /> Enable notifications
               </button>
-            ))}
+            ) : (
+              <span className="chip chip-live ml-auto">Notifications on</span>
+            )}
           </div>
-        </div>
-        <label className="mt-4 block">
-          <span className="kicker">Price (USD) · now {cur ? `$${cur.toFixed(2)}` : "…"}</span>
-          <input className="field num mt-1.5" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} aria-label="Alert price" data-testid="alert-price" />
-        </label>
-        <div className="mt-2 flex gap-1 text-[12.5px]">
-          {[-5, -2, 2, 5].map((p) => (
-            <button key={p} type="button" onClick={() => quick(p)} className="cursor-pointer rounded-[6px] border border-line-2 px-2 py-1 text-ink-2 hover:text-ink">
-              {p > 0 ? `+${p}` : p}%
+          <div className="p-3">
+            <label className="block">
+              <span className="label">Asset</span>
+              <select className="field mt-1.5" value={asset} onChange={(e) => setAsset(e.target.value)} aria-label="Asset">
+                {STOCKS.map((s) => (
+                  <option key={s.symbol} value={s.symbol}>
+                    {s.symbol} · {s.name}
+                  </option>
+                ))}
+                <option value="TAO">TAO · Bittensor (OKX)</option>
+              </select>
+            </label>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <span className="label">Condition</span>
+              <div className="seg">
+                {(["above", "below"] as const).map((d) => (
+                  <button key={d} type="button" aria-pressed={dir === d} onClick={() => setDir(d)} className="!font-sans">
+                    {d === "above" ? "Goes over" : "Goes under"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="mt-3 block">
+              <span className="label flex justify-between">
+                Price (USD) <span>now {cur ? `$${cur.toFixed(2)}` : "…"}</span>
+              </span>
+              <input className="field num mt-1.5" inputMode="decimal" value={price} placeholder={cur ? cur.toFixed(2) : ""} onChange={(e) => setPrice(e.target.value)} aria-label="Alert price" data-testid="alert-price" />
+            </label>
+            <div className="mt-2 flex gap-1">
+              {[-5, -2, 2, 5].map((p) => (
+                <button key={p} type="button" onClick={() => quick(p)} className="num cursor-pointer rounded-[4px] border border-line px-2 py-1 text-[11.5px] text-ink-3 hover:border-line-2 hover:text-ink">
+                  {p > 0 ? `+${p}` : p}%
+                </button>
+              ))}
+            </div>
+            <button type="button" className="abtn abtn-face mt-3 w-full" onClick={add} disabled={!(Number(price) > 0)} data-testid="alert-create">
+              Create alert
             </button>
-          ))}
-        </div>
-        <button type="button" className="btn btn-accent btn-sm mt-4" onClick={add} disabled={!(Number(price) > 0)} data-testid="alert-create">
-          Create alert
-        </button>
-        <p className="mt-3 text-[12px] text-ink-3">Compared with Chainlink feed prices (TAO with OKX spot) on each refresh while a tab is open. Saved in this browser alone.</p>
-      </section>
-      <div className="min-w-0 space-y-5">
-        <section className="rounded-[10px] border border-line bg-card p-4">
-          <h2 className="kicker !text-ink-2">Watchlist · {stars.length} starred</h2>
+            <p className="mt-3 text-[11.5px] leading-relaxed text-faint">Checked against Chainlink feed prices (TAO against OKX spot) on each refresh while a tab is open. Saved in this browser alone.</p>
+          </div>
+        </section>
+        <section className="panel overflow-hidden">
+          <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+            <h2 className="label !text-ink/85">Watchlist</h2>
+            <span className="label">{stars.length} starred</span>
+          </div>
           {stars.length ? (
-            <ul className="mt-3 flex flex-wrap gap-1.5">
+            <ul className="flex flex-wrap gap-1.5 p-3">
               {stars.map((s) => (
                 <li key={s}>
-                  <Link href={`/markets/${s.toLowerCase()}`} className="chip">
+                  <Link href={`/markets/${s.toLowerCase()}`} className="num rounded-[3px] border border-line px-1.5 py-0.5 text-[12px] text-ink hover:border-line-2">
                     {s} {now[s] ? `$${now[s].toFixed(2)}` : ""}
                   </Link>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-[13px] text-ink-3">Tap ★ beside a token on Markets and it stays here.</p>
+            <p className="p-3 text-[13px] text-ink-3">
+              Star a token on the{" "}
+              <Link href="/markets" className="link">
+                Markets
+              </Link>{" "}
+              page to pin it here.
+            </p>
           )}
         </section>
-        <section className="rounded-[10px] border border-line bg-card p-4">
-          <h2 className="kicker !text-ink-2">Armed · {armed.length} active</h2>
+      </div>
+      <div className="min-w-0 space-y-3">
+        <section className="panel overflow-hidden">
+          <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+            <h2 className="label !text-ink/85">Armed</h2>
+            <span className="label">{armed.length} active</span>
+          </div>
           {armed.length ? (
-            <ul className="mt-2 divide-y divide-line" data-testid="alerts-armed">
+            <ul className="divide-y divide-line" data-testid="alerts-armed">
               {armed.map((a) => (
-                <li key={a.id} className="flex items-center justify-between gap-3 py-2 text-[13.5px]">
+                <li key={a.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-[13px]">
                   <span>
-                    <span className="font-semibold text-ink">{a.asset}</span> {a.dir === "above" ? "rises above" : "falls below"} <span className="num">${a.price}</span>
+                    <span className="num font-medium text-ink">{a.asset}</span> {a.dir === "above" ? "rises above" : "falls below"} <span className="num">${a.price}</span>
                   </span>
-                  <button type="button" onClick={() => setAlerts(alerts.filter((x) => x.id !== a.id))} className="cursor-pointer text-[12.5px] text-ink-3 hover:text-down">
+                  <button type="button" onClick={() => setAlerts(alerts.filter((x) => x.id !== a.id))} className="abtn !h-6 !px-2 !text-[11.5px]">
                     Remove
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-[13px] text-ink-3">Nothing is armed.</p>
+            <p className="py-8 text-center text-[13px] text-ink-3">No active alerts.</p>
           )}
         </section>
-        <section className="rounded-[10px] border border-line bg-card p-4">
-          <h2 className="kicker !text-ink-2">Triggered · {fired.length}</h2>
+        <section className="panel overflow-hidden">
+          <div className="flex min-h-9 items-center gap-3 border-b border-white/[0.06] bg-white/[0.015] px-3 py-1.5">
+            <h2 className="label !text-ink/85">Triggered</h2>
+            <span className="label">{fired.length}</span>
+          </div>
           {fired.length ? (
-            <ul className="mt-2 divide-y divide-line">
+            <ul className="divide-y divide-line">
               {fired.map((a) => (
-                <li key={a.id} className="flex items-center justify-between gap-3 py-2 text-[13.5px] text-ink-2">
+                <li key={a.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-[13px] text-ink-2">
                   <span>
                     {a.asset} {a.dir === "above" ? "above" : "below"} ${a.price} · hit ${a.firedPrice?.toFixed(2)}
                   </span>
-                  <button type="button" onClick={() => setAlerts(alerts.filter((x) => x.id !== a.id))} className="cursor-pointer text-[12.5px] text-ink-3 hover:text-ink">
+                  <button type="button" onClick={() => setAlerts(alerts.filter((x) => x.id !== a.id))} className="abtn !h-6 !px-2 !text-[11.5px]">
                     Clear
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-[13px] text-ink-3">No alert has gone off so far.</p>
+            <p className="py-8 text-center text-[13px] text-ink-3">Nothing has gone off yet.</p>
           )}
         </section>
       </div>

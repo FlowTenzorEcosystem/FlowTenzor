@@ -1,27 +1,16 @@
-import { AppHeader, AppRail, AppTicker } from "@/components/app/AppShell";
-import { SiteFooter } from "@/components/SiteFooter";
+import { AppFrame } from "@/components/app/AppShell";
 import { AlertWatcher } from "@/components/app/Alerts";
 
 /**
- * App screens: a top bar with search and wallet, group tabs underneath, the
- * page in a wide column with a status rail on the right (below on smaller
- * screens), and the live price strip at the foot of the page.
+ * App screens: a left sidebar with the page groups and the token card, a top
+ * bar with search and wallet, the live price strip, the page in a scrolling
+ * column, and a status bar along the bottom (a tab bar on phones).
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <AppHeader />
-      <div className="mx-auto grid max-w-[1560px] grid-cols-1 gap-6 px-4 py-6 sm:px-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <main id="main" className="min-w-0">
-          {children}
-        </main>
-        <aside className="min-w-0 xl:sticky xl:top-[124px] xl:self-start" aria-label="Status">
-          <AppRail />
-        </aside>
-      </div>
-      <AppTicker />
+    <AppFrame>
+      <div className="px-4 pt-4 pb-10 max-sm:px-3">{children}</div>
       <AlertWatcher />
-      <SiteFooter />
-    </>
+    </AppFrame>
   );
 }

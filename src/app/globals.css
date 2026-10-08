@@ -1,67 +1,73 @@
 @import "tailwindcss";
 
 /*
- * FlowTenzor design tokens.
- * Warm paper ground, deep slate ink, and one deep teal for links and the
- * "flow" lines. Amber marks the single thing to press on a screen (always as
- * a fill with ink text on it). Data sits in a monospaced face; headings in a
- * condensed grotesque. Dark slate bands carry live data.
- *
- * Token names (paper, ink, stamp, board, ...) are shared with the wallet and
- * swap components, so they re-skin from this one file.
+ * FlowTenzor design tokens: a black ground, grey surfaces in small steps,
+ * #222/#333 hairlines, white for the one action on a screen. Display headings
+ * in Newsreader, body in Inter, labels and numbers in Geist Mono.
+ * Token names (paper, ink, line, ...) are shared by every component, so the
+ * whole site re-skins from this file.
  */
 @theme {
-  /* Dark ground, near-black. Surfaces step up in small increments; hairlines are white at low alpha. */
-  --color-paper: #050607;
-  --color-paper-2: #0d1112;
-  --color-paper-3: #172022;
-  --color-card: #0a0d0e;
-  --color-field: #0d1112;
-  --color-field-edge: #3a4447;
-  --color-ink: #f2f3f0;
-  --color-ink-2: #c7ccca;
-  --color-ink-3: #8b9493;
-  --color-faint: #6b7473;
-  --color-line: rgba(255, 255, 255, 0.08);
-  --color-line-2: rgba(255, 255, 255, 0.16);
+  /* Black ground; surfaces step up in small grey increments; hairlines #222 / #333. */
+  --color-paper: #000000;
+  --color-paper-2: #121212;
+  --color-paper-3: #1a1a1a;
+  --color-card: #0b0b0b;
+  --color-field: #0b0b0b;
+  --color-field-edge: #333333;
+  --color-ink: #f4f4f4;
+  --color-ink-2: #bdbdbd;
+  --color-ink-3: #8c8c8c;
+  --color-faint: #5a5a5a;
+  --color-line: #222222;
+  --color-line-2: #333333;
 
-  /* Links and interactive text: the FlowTenzor mint. */
-  --color-stamp: #5fe3b4;
-  --color-stamp-deep: #8ff0cc;
-  --color-stamp-soft: rgba(95, 227, 180, 0.12);
-  --color-flow: #3fcf9c;
-  --color-flow-soft: rgba(63, 207, 156, 0.16);
-  /* Practice labels. */
-  --color-seal: #f0b77a;
-  --color-seal-soft: rgba(240, 183, 122, 0.12);
+  /* Interactive text stays white; emphasis comes from weight and fills, not hue. */
+  --color-stamp: #f4f4f4;
+  --color-stamp-deep: #ffffff;
+  --color-stamp-soft: rgba(255, 255, 255, 0.08);
+  --color-flow: #d6d6d6;
+  --color-flow-soft: rgba(255, 255, 255, 0.1);
+  /* Practice labels: a quieter grey with a dashed edge (see .chip-practice). */
+  --color-seal: #a8a8a8;
+  --color-seal-soft: rgba(255, 255, 255, 0.06);
 
-  /* The one action per screen: mint fill, near-black text. */
-  --color-accent: #5fe3b4;
-  --color-accent-2: #3fcf9c;
-  --color-accent-soft: rgba(95, 227, 180, 0.2);
-  /* "Rise": amber, for the winner dot and highlights only. */
+  /* The one action per screen: white fill, black text. */
+  --color-accent: #ffffff;
+  --color-accent-2: #dedede;
+  --color-accent-soft: rgba(255, 255, 255, 0.15);
+  /* The amber point of the FlowTenzor mark; used for the mark only. */
   --color-rise: #f5b84a;
 
-  --color-up: #4fd69a;
-  --color-up-soft: rgba(79, 214, 154, 0.12);
-  --color-down: #f2826a;
-  --color-down-soft: rgba(242, 130, 106, 0.12);
+  /* Up is bright, down is dim: the market reads in value, not colour. */
+  --color-up: #f4f4f4;
+  --color-up-soft: rgba(255, 255, 255, 0.1);
+  --color-down: #7a7a7a;
+  --color-down-soft: rgba(255, 255, 255, 0.05);
 
   --color-board: #000000;
-  --color-board-2: #0a0d0e;
-  --color-board-3: #172022;
-  --color-chalk: #f2f3f0;
-  --color-chalk-2: #a9b1b0;
+  --color-board-2: #0b0b0b;
+  --color-board-3: #1a1a1a;
+  --color-chalk: #f4f4f4;
+  --color-chalk-2: #8c8c8c;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-serif4), Georgia, serif;
+  --font-sans: "FtTri", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-news), Georgia, serif;
   --font-serif: var(--font-display);
-  --font-mono: var(--font-jet), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono: "FtTri", var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* The up and down triangles are missing from the text faces; take them from a system face at text size. */
+@font-face {
+  font-family: "FtTri";
+  src: local("Arial"), local("Helvetica"), local("Liberation Sans"), local("DejaVu Sans");
+  unicode-range: U+25B2, U+25B4, U+25BC, U+25BE, U+25C6;
+  size-adjust: 70%;
 }
 
 @layer base {
   :root {
-    --header-h: 68px;
+    --header-h: 106px;
     color-scheme: dark;
   }
   html {
@@ -70,22 +76,19 @@
   }
   body {
     background: var(--color-paper);
-    color: var(--color-ink-2);
+    color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 16px;
-    line-height: 1.55;
+    line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
-    background: var(--color-accent);
-    color: #050607;
+    background: #ffffff;
+    color: #000000;
   }
   :focus-visible {
-    outline: 2px solid var(--color-stamp);
+    outline: 1px solid #ffffff;
     outline-offset: 2px;
-  }
-  .night :focus-visible {
-    outline-color: var(--color-accent);
   }
   h1,
   h2,
@@ -113,75 +116,91 @@
 @layer components {
   .ctn {
     width: 100%;
-    max-width: 1240px;
+    max-width: 1440px;
     margin-inline: auto;
     padding-inline: 16px;
   }
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
     .ctn {
-      padding-inline: 28px;
-    }
-  }
-  @media (min-width: 1280px) {
-    .ctn {
-      padding-inline: 40px;
+      padding-inline: 56px;
     }
   }
 
-  /* Type scale. */
+  /* Type scale: display serif with tight tracking, Inter body, Geist Mono labels. */
   .h-hero {
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(40px, 6.4vw, 84px);
-    line-height: 0.98;
-    letter-spacing: -0.03em;
+    font-size: clamp(40px, 6.67vw, 96px);
+    line-height: 1;
+    letter-spacing: -0.05em;
     color: var(--color-ink);
   }
   .h-sec {
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(30px, 3.9vw, 50px);
-    line-height: 1.04;
-    letter-spacing: -0.028em;
+    font-size: clamp(36px, 4.86vw, 70px);
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    color: var(--color-ink);
+  }
+  .h-mid {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(32px, 3.33vw, 48px);
+    line-height: 1.05;
+    letter-spacing: -0.045em;
     color: var(--color-ink);
   }
   .h-sub {
     font-family: var(--font-display);
-    font-weight: 500;
-    font-size: clamp(21px, 2vw, 26px);
-    line-height: 1.15;
-    letter-spacing: -0.015em;
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
     color: var(--color-ink);
   }
   .h-item {
     font-family: var(--font-sans);
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 1.25;
-    letter-spacing: -0.01em;
+    font-weight: 400;
+    font-size: 19px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
     color: var(--color-ink);
   }
   .lede {
-    font-size: clamp(17px, 1.5vw, 20px);
-    line-height: 1.55;
-    color: var(--color-ink-2);
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--color-ink-3);
   }
   .small {
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.5;
     color: var(--color-ink-3);
   }
   .num {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
   }
   .kicker {
     font-family: var(--font-mono);
     font-size: 12px;
-    line-height: 1.3;
-    letter-spacing: 0.06em;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: var(--color-ink-3);
+  }
+  /* App label: smaller mono caps in the dim grey. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+  }
+  .prose-f {
+    color: var(--color-ink-2);
   }
   .prose-f p + p,
   .prose-f p + ul,
@@ -190,16 +209,16 @@
   }
   .prose-f h2 {
     font-family: var(--font-display);
-    font-weight: 650;
-    font-size: clamp(24px, 2.4vw, 30px);
-    line-height: 1.15;
-    letter-spacing: -0.02em;
+    font-weight: 400;
+    font-size: clamp(26px, 2.4vw, 32px);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
     margin: 1.8em 0 0.6em;
   }
   .prose-f h3 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 20px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 17px;
     margin: 1.4em 0 0.4em;
   }
   .prose-f ul {
@@ -210,59 +229,58 @@
     margin-top: 0.35em;
   }
   .prose-f a {
-    color: var(--color-stamp);
+    color: var(--color-ink);
     text-decoration: underline;
+    text-decoration-color: var(--color-line-2);
     text-underline-offset: 3px;
+  }
+  .prose-f a:hover {
+    text-decoration-color: var(--color-ink);
   }
   .prose-f code {
     font-family: var(--font-mono);
-    font-size: 0.9em;
-    background: var(--color-paper-2);
-    padding: 0.1em 0.35em;
+    font-size: 0.88em;
+    background: var(--color-paper-3);
+    border: 1px solid var(--color-line);
+    padding: 0.08em 0.35em;
     border-radius: 4px;
     overflow-wrap: anywhere;
   }
 
-  /* Buttons. */
+  /* Buttons: pills. Accent = white fill, ghost = hairline. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    min-height: 46px;
-    padding: 11px 20px;
-    border-radius: 10px;
-    border: 1.5px solid transparent;
-    font-weight: 600;
-    font-size: 15px;
-    line-height: 1.2;
+    gap: 6px;
+    min-height: 43px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.5;
     white-space: nowrap;
     cursor: pointer;
     transition:
       background-color 0.15s,
       color 0.15s,
       border-color 0.15s,
-      transform 0.15s;
+      opacity 0.15s;
   }
   .btn-sm {
-    min-height: 38px;
-    padding: 7px 14px;
-    font-size: 14px;
-    border-radius: 8px;
+    min-height: 32px;
+    padding: 6px 14px;
+    font-size: 13px;
   }
-  .btn-accent {
-    background: var(--color-accent);
-    color: #04140e;
-  }
-  .btn-accent:not(:disabled):hover {
-    background: var(--color-accent-2);
-  }
+  .btn-accent,
   .btn-ink {
-    background: var(--color-ink);
-    color: #050607;
-  }
-  .btn-ink:not(:disabled):hover {
     background: #ffffff;
+    color: #0a0a0a;
+  }
+  .btn-accent:not(:disabled):hover,
+  .btn-ink:not(:disabled):hover {
+    background: #dedede;
   }
   .btn-ghost {
     border-color: var(--color-line-2);
@@ -270,118 +288,203 @@
     background: transparent;
   }
   .btn-ghost:not(:disabled):hover {
-    background: var(--color-ink);
-    color: #050607;
+    border-color: #5a5a5a;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .btn-mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    min-height: 46px;
   }
   .btn-up {
-    background: var(--color-up);
-    color: #fff;
+    background: #ffffff;
+    color: #0a0a0a;
   }
   .btn-down {
-    background: var(--color-down);
-    color: #fff;
+    background: transparent;
+    border-color: var(--color-line-2);
+    color: var(--color-ink);
   }
   .btn:disabled {
     cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  /* App buttons: squarer, smaller, with the raised white face. */
+  .abtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-line);
+    font-size: 12.5px;
+    color: var(--color-ink-3);
+    background: transparent;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color 0.15s,
+      border-color 0.15s,
+      background-color 0.15s;
+  }
+  .abtn:not(:disabled):hover {
+    color: var(--color-ink);
+    border-color: var(--color-line-2);
+  }
+  .abtn-face {
+    border: 0;
+    color: #0a0a0a;
+    font-weight: 500;
+    background: linear-gradient(#ffffff, #dedede);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  .abtn-face:not(:disabled):hover {
+    color: #0a0a0a;
+    background: linear-gradient(#ffffff, #ececec);
+  }
+  .abtn:disabled {
+    cursor: not-allowed;
     opacity: 0.5;
-  }
-  .btn .arr {
-    transition: transform 0.15s;
-  }
-  .btn:not(:disabled):hover .arr {
-    transform: translateX(3px);
   }
 
   .link {
-    color: var(--color-stamp);
+    color: var(--color-ink);
     text-decoration: underline;
+    text-decoration-color: var(--color-line-2);
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
   }
   .link:hover {
-    color: var(--color-stamp-deep);
+    text-decoration-color: var(--color-ink);
   }
 
   /* Surfaces. */
   .card {
     background: var(--color-card);
     border: 1px solid var(--color-line);
-    border-radius: 14px;
+    border-radius: 8px;
   }
   .sheet {
     background: var(--color-card);
     border: 1px solid var(--color-line);
-    border-radius: 14px;
-    
+    border-radius: 8px;
+  }
+  /* App panel: a faint top-lit gradient with an inset highlight. */
+  .panel {
+    background: linear-gradient(#101010, #0a0a0a);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--color-line);
   }
   .rule {
     border-top: 1px solid var(--color-line);
   }
 
-  /* Labels. */
+  /* Labels: square mono tags with a hairline, like a terminal flag. */
   .chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 3px 9px;
-    border-radius: 999px;
+    padding: 2px 6px;
+    border-radius: 3px;
     border: 1px solid var(--color-line-2);
     font-family: var(--font-mono);
-    font-size: 11.5px;
+    font-size: 10.5px;
     line-height: 1.4;
-    letter-spacing: 0.02em;
-    color: var(--color-ink-2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
     white-space: nowrap;
   }
   .chip::before {
     content: "";
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 999px;
     background: currentColor;
-    opacity: 0.8;
   }
   .chip-live {
-    color: var(--color-up);
-    border-color: color-mix(in srgb, var(--color-up) 45%, transparent);
+    color: #0a0a0a;
+    background: #f4f4f4;
+    border-color: #f4f4f4;
   }
   .chip-practice {
-    color: var(--color-seal);
-    border-color: color-mix(in srgb, var(--color-seal) 45%, transparent);
+    color: var(--color-ink-2);
+    border-style: dashed;
   }
   .chip-target {
-    color: var(--color-ink-3);
+    color: var(--color-faint);
     border-style: dashed;
   }
   .chip-down {
     color: var(--color-down);
-    border-color: color-mix(in srgb, var(--color-down) 45%, transparent);
   }
 
   /* Form fields. */
   .field {
     width: 100%;
     min-width: 0;
-    min-height: 44px;
-    padding: 9px 12px;
-    border-radius: 9px;
-    border: 1.5px solid var(--color-line-2);
+    min-height: 36px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--color-line);
     background: var(--color-field);
     color: var(--color-ink);
-    font-size: 15px;
+    font-size: 13.5px;
   }
   .field::placeholder {
     color: var(--color-faint);
   }
   .field:focus {
     outline: none;
-    border-color: var(--color-stamp);
+    border-color: var(--color-line-2);
+    background: #0f0f0f;
   }
   .field:disabled {
     opacity: 0.6;
   }
 
-  /* Tables. */
+  /* Segmented control. */
+  .seg {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--color-line);
+    border-radius: 6px;
+    background: #050505;
+  }
+  .seg > * {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-ink-3);
+    cursor: pointer;
+  }
+  .seg > [aria-pressed="true"],
+  .seg > [aria-selected="true"],
+  .seg > [aria-current] {
+    background: #f4f4f4;
+    color: #0a0a0a;
+  }
+
+  /* Tables: mono cells, dim mono caps headers, hairline rows. */
   .scroll-x {
     overflow-x: auto;
     min-width: 0;
@@ -391,24 +494,29 @@
   .tbl {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
   }
   .tbl th {
     text-align: left;
     font-family: var(--font-mono);
-    font-weight: 500;
-    font-size: 11.5px;
-    letter-spacing: 0.05em;
+    font-weight: 400;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--color-ink-3);
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--color-line-2);
+    color: var(--color-faint);
+    padding: 12px 12px;
+    border-bottom: 1px solid var(--color-line);
     white-space: nowrap;
   }
   .tbl td {
-    padding: 11px 12px;
+    padding: 14px 12px;
     border-bottom: 1px solid var(--color-line);
     vertical-align: middle;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .tbl tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
   }
   .tbl tr:last-child td {
     border-bottom: 0;
@@ -424,12 +532,10 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
-    padding: 20px 0;
+    padding: 18px 0;
     cursor: pointer;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 19px;
-    line-height: 1.3;
+    font-size: 16px;
+    line-height: 1.35;
     color: var(--color-ink);
   }
   .acc > summary::-webkit-details-marker {
@@ -437,11 +543,11 @@
   }
   .acc-toggle {
     flex: none;
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     display: grid;
     place-items: center;
-    border: 1.5px solid var(--color-ink);
+    border: 1px solid var(--color-line-2);
     border-radius: 999px;
     transition: transform 0.2s;
   }
@@ -450,14 +556,11 @@
   }
 }
 
-/* Raised bands: a step lighter than the page, same tokens otherwise. */
+/* Raised bands keep the same tokens on the black ground. */
 .night {
-  --color-paper: #0a0d0e;
-  --color-card: #0f1314;
   background: var(--color-paper);
   color: var(--color-ink-2);
 }
-
 
 @keyframes pulse-dot {
   50% {
@@ -478,13 +581,113 @@
 .marquee:hover {
   animation-play-state: paused;
 }
-/* Flow lines: a dash that travels along a path. */
 @keyframes flow-dash {
   to {
     stroke-dashoffset: -120;
   }
 }
 .flow-dash {
-  stroke-dasharray: 6 14;
+  stroke-dasharray: 3 5;
   animation: flow-dash 6s linear infinite;
+}
+/* Copy feedback on the CA console: one bright pass over the row. */
+@keyframes ca-flash {
+  0% {
+    background-color: rgba(255, 255, 255, 0.35);
+  }
+  100% {
+    background-color: rgba(255, 255, 255, 0);
+  }
+}
+.ca-flash {
+  animation: ca-flash 0.9s ease-out;
+}
+/* Reveal on scroll (set by the Reveal helper). */
+.rv {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+.rv.in {
+  opacity: 1;
+  transform: none;
+}
+@keyframes mark-sway {
+  0%,
+  100% {
+    transform: rotateY(-16deg) rotateX(6deg);
+  }
+  50% {
+    transform: rotateY(16deg) rotateX(-4deg);
+  }
+}
+.mark-sway {
+  animation: mark-sway 7s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+/* Barcode bands on the landing page. */
+.barcode-l {
+  animation: marquee 50s linear infinite;
+}
+.barcode-r {
+  animation: marquee 60s linear infinite reverse;
+}
+@keyframes barcode-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.25;
+  }
+}
+.barcode-blink {
+  animation: barcode-blink 1.6s steps(2, jump-none) infinite;
+}
+/* Feature cards drifting sideways. */
+.drift {
+  animation: marquee 70s linear infinite;
+}
+.drift:hover {
+  animation-play-state: paused;
+}
+/* Docs body. */
+.docs-prose {
+  font-size: 16.5px;
+  line-height: 1.7;
+  color: #c8c8c8;
+}
+.docs-prose h2 {
+  font-size: clamp(30px, 2.6vw, 38px);
+  letter-spacing: -0.045em;
+  margin: 2em 0 0.8em;
+}
+.docs-ul {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+.docs-ul > li {
+  position: relative;
+  padding-left: 24px;
+}
+.docs-ul > li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.68em;
+  width: 6px;
+  height: 6px;
+  background: var(--color-ink-3);
+}
+.docs-ol > li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  margin-top: 0.6em;
+}
+.docs-ol > li > .num {
+  font-size: 11px;
+  color: var(--color-ink-3);
+  padding-top: 0.35em;
 }

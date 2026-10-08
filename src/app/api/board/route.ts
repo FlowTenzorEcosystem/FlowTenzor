@@ -16,6 +16,13 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const model = url.searchParams.get("model");
   const h = url.searchParams.get("h");
+  if (url.searchParams.get("strip")) {
+    // Price strip for the app ticker: price and 24 h change only.
+    return NextResponse.json(
+      { at: b.at, rows: b.rows.map((r) => ({ symbol: r.stock.symbol, price: r.price, change24h: r.change24h })) },
+      { headers: { "cache-control": "public, max-age=30" } },
+    );
+  }
   if (model) {
     // One baseline's scored record at one horizon, for paper follow.
     const lines = b.recent.filter((l) => l.model === model && (h === null || String(l.horizon) === h)).slice(0, 3000);

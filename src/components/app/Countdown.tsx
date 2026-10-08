@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 /** Live countdown to a unix time; shows local time beside it. */
-export function Countdown({ to, label }: { to: number; label?: string }) {
+export function Countdown({ to, label, big = false }: { to: number; label?: string; big?: boolean }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     // The clock is read after mount so the server-rendered frame and the first client frame match.
@@ -13,10 +13,13 @@ export function Countdown({ to, label }: { to: number; label?: string }) {
     return () => window.clearInterval(t);
   }, []);
   const left = now == null ? null : Math.max(0, Math.floor(to - now));
-  const hms = left == null ? "--:--:--" : `${String(Math.floor(left / 3600)).padStart(2, "0")}:${String(Math.floor((left % 3600) / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
+  const days = left == null ? 0 : Math.floor(left / 86_400);
+  const rest = left == null ? 0 : left % 86_400;
+  const clock = `${String(Math.floor(rest / 3600)).padStart(2, "0")}:${String(Math.floor((rest % 3600) / 60)).padStart(2, "0")}:${String(rest % 60).padStart(2, "0")}`;
+  const hms = left == null ? "--:--:--" : days ? `${days}d ${clock}` : clock;
   return (
     <span>
-      <span className="num text-[28px] text-ink" data-testid="countdown">
+      <span className={`num text-ink ${big ? "text-[40px] leading-none tracking-[-0.02em]" : "text-[28px]"}`} data-testid="countdown">
         {hms}
       </span>
       {label ? <span className="ml-2 text-[12.5px] text-ink-3">{label}</span> : null}
