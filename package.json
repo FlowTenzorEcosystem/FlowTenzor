@@ -10,8 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/lib/**/*.test.ts scripts/*.test.mjs",
     "verify-deployment": "node scripts/verify-deployment.mjs",
-    "verify-stocks": "node scripts/verify-stocks.mjs",
-    "contracts:bytecode": "node scripts/contracts-bytecode.mjs"
+    "verify-stocks": "node scripts/verify-stocks.mjs"
   },
   "dependencies": {
     "@noble/curves": "^2.4.0",

@@ -4,7 +4,7 @@
 // explorer link derive from it. Anything that is not a 0x + 40 hex address is
 // treated as "not launched yet".
 
-const CA = "0xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+const CA = "0x82a3585118bde26da9971bbf4c35c607b4d9cc8b";
 // Pair the chart button opens on DEXTools: the token's Pons curve while it trades
 // there. After graduation, swap in the address of the pair DEXTools lists for the pool.
 const CHART_PAIR = "";

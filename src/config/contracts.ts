@@ -1,14 +1,13 @@
 // FlowTenzor contracts on Robinhood Chain: the one place their addresses live.
 //
-// While an address is empty, the matching feature keeps running in practice
-// mode (free signatures, nothing moves on chain). After the owner deploys from
-// /deploy, paste the address and block it prints below and push: the same
-// screens then read the contract and send real transactions through the
-// connected wallet.
+// All three are live on mainnet and verified on the explorer:
 //
-//   ForecastOracle  no token needed: can be deployed now.
-//   CallCredits     no token needed: needs the treasury address.
-//   ModelBond       needs the $FLOWTENZOR contract address (deploy after the CA exists).
+//   ForecastOracle  0x6e12dfdc445e746d830b74bb36bfe9b507669f0f
+//   CallCredits     0x7ca43c78930915a9eddf8cdf17fe63c28887d460
+//   ModelBond       0x9f56b3e7c96a80f06f7af4853728940b02f8eead (bonds $FLOWTENZOR)
+//
+// An empty address keeps the matching feature in practice mode (free
+// signatures, nothing moves on chain).
 //
 // The NEXT_PUBLIC_* variables are only a fallback for local test builds against
 // a devnet or a fork. Leave them unset in production.
@@ -17,8 +16,8 @@ const ORACLE = "0x6e12dfdc445e746d830b74bb36bfe9b507669f0f";
 const ORACLE_BLOCK = 83277338;
 const CREDITS = "0x7ca43c78930915a9eddf8cdf17fe63c28887d460";
 const CREDITS_BLOCK = 83277882;
-const BOND = "";
-const BOND_BLOCK = 0;
+const BOND = "0x9f56b3e7c96a80f06f7af4853728940b02f8eead";
+const BOND_BLOCK = 85879485;
 
 const isAddr = (v: string) => /^0x[0-9a-fA-F]{40}$/.test(v);
 const pick = (fixed: string, env: string | undefined) => (isAddr(fixed) ? fixed : env && isAddr(env) ? env : "");
@@ -48,7 +47,7 @@ export const oracleLive = () => CONTRACTS.oracle.address !== "";
 export const creditsLive = () => CONTRACTS.credits.address !== "";
 export const bondLive = () => CONTRACTS.bond.address !== "";
 
-/** Deployment parameters, shown on /deploy and checked by scripts/verify-deployment.mjs. */
+/** Deployment parameters, checked by scripts/verify-deployment.mjs. */
 export const DEPLOY = {
   /** Seconds a feed answer may be old when a forecast is committed (covers a weekend plus a heartbeat). */
   maxReferenceAge: 4 * 24 * 3600,

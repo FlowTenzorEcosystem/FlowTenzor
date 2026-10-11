@@ -83,7 +83,7 @@ export const encodeApprove = (spender: string, amount: bigint) => sel(SIG.approv
 export const encodeAllowance = (owner: string, spender: string) => sel(SIG.allowance) + address(owner) + address(spender);
 export const encodeBalanceOf = (owner: string) => sel(SIG.balanceOf) + address(owner);
 
-/** Constructor arguments, ABI-encoded (appended to the creation code by /deploy). */
+/** Constructor arguments, ABI-encoded (appended to the creation code at deployment). */
 export function encodeOracleArgs(feeds: string[], symbols: string[], maxReferenceAge: number) {
   const feedArr = word(feeds.length) + feeds.map(address).join("");
   const symArr = word(symbols.length) + symbols.map((s) => utf8(s).padEnd(64, "0")).join("");

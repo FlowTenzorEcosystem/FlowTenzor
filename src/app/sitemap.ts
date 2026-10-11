@@ -4,7 +4,7 @@ import { STOCKS } from "@/config/stocks";
 import { DOCS } from "@/content/docs";
 
 // Every indexable page, the same list the navigation and footer link to.
-// Account and tool views (/arena, /portfolio, /alerts, /settings, /swap, /deploy) stay out.
+// Account and tool views (/arena, /portfolio, /alerts, /settings, /swap) stay out.
 export const ROUTES = [
   "",
   "/forecasts",
