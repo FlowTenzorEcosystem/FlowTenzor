@@ -1,19 +1,18 @@
 import { BRAND } from "@/config/brand";
 
 /*
- * The FlowTenzor mark: three streamlines that converge and rise into one
- * point. Drawn inline so it takes the text colour of its ground; the files in
- * public/brand and the icons come from referensi/tools/make-brand.mjs.
+ * The FlowTenzor mark: two stacked folded planes forming an F, traced from the
+ * owner's logo. Drawn inline so it takes the text colour of its ground; the
+ * files in public/brand and the icons come from referensi/tools/make-brand.mjs.
  */
-export function Mark({ size = 28, className = "", accent = "#f2b33d" }: { size?: number; className?: string; accent?: string }) {
+export const MARK_PATH = "M0 80 198 0 376 83V190L125 73V216L0 158ZM0 283 198 204 334 267.5V374L125 276V479L0 421Z";
+/** Square frame around the 376 x 480 artwork, so a size prop reads like the old square mark. */
+export const MARK_VIEWBOX = "-112 -60 600 600";
+
+export function Mark({ size = 28, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" className={`shrink-0 ${className}`}>
-      <g fill="none" stroke="currentColor" strokeWidth="5.6" strokeLinecap="round">
-        <path d="M8 21 C 24 21, 37 19, 50 13" />
-        <path d="M8 33 C 26 33, 38 27, 50 13" />
-        <path d="M8 45 C 28 45, 41 35, 50 13" />
-      </g>
-      <circle cx="51" cy="12.5" r="6.4" fill={accent} />
+    <svg width={size} height={size} viewBox={MARK_VIEWBOX} aria-hidden="true" className={`shrink-0 ${className}`}>
+      <path d={MARK_PATH} fill="currentColor" />
     </svg>
   );
 }
@@ -28,7 +27,7 @@ export function Wordmark({ className = "", size = 15 }: { className?: string; si
   );
 }
 
-/** The mark on its teal plate, used as an avatar. */
+/** The mark on its plate, used as an avatar. */
 export function MarkBadge({ size = 36, className = "" }: { size?: number; className?: string }) {
   return (
     <span className={`inline-grid shrink-0 place-items-center rounded-[22%] bg-flow text-paper ${className}`} style={{ width: size, height: size }} aria-hidden="true">

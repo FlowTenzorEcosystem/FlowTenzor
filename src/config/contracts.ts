@@ -13,10 +13,10 @@
 // The NEXT_PUBLIC_* variables are only a fallback for local test builds against
 // a devnet or a fork. Leave them unset in production.
 
-const ORACLE = "";
-const ORACLE_BLOCK = 0;
-const CREDITS = "";
-const CREDITS_BLOCK = 0;
+const ORACLE = "0x6e12dfdc445e746d830b74bb36bfe9b507669f0f";
+const ORACLE_BLOCK = 83277338;
+const CREDITS = "0x7ca43c78930915a9eddf8cdf17fe63c28887d460";
+const CREDITS_BLOCK = 83277882;
 const BOND = "";
 const BOND_BLOCK = 0;
 

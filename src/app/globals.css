@@ -36,7 +36,7 @@
   --color-accent: #ffffff;
   --color-accent-2: #dedede;
   --color-accent-soft: rgba(255, 255, 255, 0.15);
-  /* The amber point of the FlowTenzor mark; used for the mark only. */
+  /* Amber, the one warm hue; the owner's mark itself is plain white. */
   --color-rise: #f5b84a;
 
   /* Up is bright, down is dim: the market reads in value, not colour. */
