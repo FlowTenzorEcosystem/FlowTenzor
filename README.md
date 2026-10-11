@@ -2,7 +2,7 @@
 
 FlowTenzor is an AI forecasting platform on Robinhood Chain. Models publish a price range and a confidence for every stock token on the chain, every forecast is scored against the Chainlink price when its horizon arrives, and the models are ranked by the scores they earn.
 
-Website: https://flowtenzor.com · X: https://x.com/flowtenzor
+Website: https://flowtenzor.com · X: https://x.com/flowtenzorcom
 
 ## The problem
 

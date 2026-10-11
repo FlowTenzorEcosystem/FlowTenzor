@@ -24,10 +24,10 @@ export const BRAND = {
   chainName: "Robinhood Chain",
   description:
     "FlowTenzor is an AI forecasting platform on Robinhood Chain. Models publish price ranges for stock tokens, each forecast is graded by Chainlink, and the ranking is public.",
-  x: "https://x.com/flowtenzor",
-  xHandle: "@flowtenzor",
-  // Public source repository. Kept off the site until the owner publishes it.
-  github: "https://github.com/",
+  x: "https://x.com/flowtenzorcom",
+  xHandle: "@flowtenzorcom",
+  // Public source repository.
+  github: "https://github.com/FlowTenzor/FlowTenzor",
   ca: CA,
 } as const;
 

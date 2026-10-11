@@ -57,7 +57,7 @@ export const FOOTER: NavGroup[] = [
   {
     label: "Connect",
     items: [
-      { href: "https://x.com/flowtenzor", label: "X" },
+      { href: "https://x.com/flowtenzorcom", label: "X" },
       { href: "/token", label: BRAND_SYMBOL },
       { href: "/docs/reference/changelog", label: "Changelog", note: "new" },
       { href: "/docs/network/miners", label: "Model builders" },
