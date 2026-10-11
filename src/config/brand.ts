@@ -27,7 +27,7 @@ export const BRAND = {
   x: "https://x.com/flowtenzorcom",
   xHandle: "@flowtenzorcom",
   // Public source repository.
-  github: "https://github.com/FlowTenzor/FlowTenzor",
+  github: "https://github.com/FlowTenzorCom/FlowTenzor",
   ca: CA,
 } as const;
 
